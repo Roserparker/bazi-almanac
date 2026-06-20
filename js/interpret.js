@@ -194,10 +194,12 @@
     else tone = '偏务实 —— 宜落地、理事、经营'
 
     var yongHint = null
-    if (yong && yong.favorable) {
-      if (yong.favorable.indexOf(dayGanWx) >= 0) yongHint = { hit: '喜', text: '今日之气（' + dayGanWx + '）正是你的喜用 —— 顺，宜借力推进、主动一些。' }
-      else if (yong.unfavorable.indexOf(dayGanWx) >= 0) yongHint = { hit: '忌', text: '今日之气（' + dayGanWx + '）偏你的忌神 —— 留意，宜守、宜缓，不必强求。' }
-      else yongHint = { hit: '平', text: '今日之气（' + dayGanWx + '）在你喜忌之外 —— 平，照常即可。' }
+    if (yong) {
+      var le = dayGanWx
+      if (yong.tiaohouEl && yong.tiaohouEl.indexOf(le) >= 0) yongHint = { hit: '喜', text: '今日之气（' + le + '）正是你的调候用神 —— 最对症、宜借力（穷通宝鉴：调候为急）。' }
+      else if (yong.favorable && yong.favorable.indexOf(le) >= 0) yongHint = { hit: '喜', text: '今日之气（' + le + '）属你的喜用 —— 顺，宜借力推进、主动一些。' }
+      else if (yong.unfavorable && yong.unfavorable.indexOf(le) >= 0) yongHint = { hit: '忌', text: '今日之气（' + le + '）偏你的忌神 —— 留意，宜守、宜缓，不必强求。' }
+      else yongHint = { hit: '平', text: '今日之气（' + le + '）在你喜忌之外 —— 平，照常即可。' }
     }
 
     return {

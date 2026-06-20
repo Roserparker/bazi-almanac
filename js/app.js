@@ -305,6 +305,9 @@
   }
 
   function wxChip(w) { return '<span class="wx-chip wx-' + WX[w] + '">' + w + '</span>' }
+  function diagText(diag) {
+    return diag.excess + '最旺' + (diag.lack && diag.lack.length ? '、缺' + diag.lack.join('') : '') + '，气候偏' + diag.climate
+  }
   function strengthHTML(st, yong) {
     var pct = Math.round(st.ratio * 100)
     return '<div class="strength-block">' +
@@ -313,7 +316,9 @@
       '<div class="sb-meter"><div class="sb-fill" style="width:' + pct + '%"></div><span class="sb-mid"></span></div>' +
       '<div class="sb-mini">帮身 ' + st.helps + ' · 耗身 ' + st.drains + '　<span class="sb-ref">仅供参考</span></div>' +
       '<div class="sb-head"><span class="sb-tag">用神</span>' + (yong.favorable.length ? '喜 ' + yong.favorable.map(wxChip).join('') + '　忌 ' + yong.unfavorable.map(wxChip).join('') : '<span class="sb-balanced">命局中和 · 贵在流通，无显著喜忌</span>') + '<span class="sb-sub">' + yong.method + '</span></div>' +
-      '<div class="sb-tiaohou">调候 ·《穷通宝鉴》：' + yong.tiaohou + '</div>' +
+      '<div class="sb-head"><span class="sb-tag">调候</span>用神 ' + (yong.tiaohouYong.length ? yong.tiaohouYong.map(function (g) { return tok(g, E.GAN_WUXING[g]) }).join('') : '—') + '<span class="sb-sub">穷通宝鉴 · ' + yong.seasonHint + '</span></div>' +
+      '<div class="sb-diag">命局诊断 · ' + diagText(yong.diag) + '</div>' +
+      '<div class="sb-reconcile">' + yong.reconcile + '</div>' +
       '<div class="sb-note">' + yong.note + '</div>' +
     '</div>'
   }

@@ -38,7 +38,9 @@ console.log(
 )
 const yong = Analyze.yongShen(chart, st)
 console.log('用神:', yong.balanced ? '中和·贵流通' : yong.strong ? '身强→喜泄克耗' : '身弱→喜生扶', '| 喜', yong.favorable.join('') || '—', '| 忌', yong.unfavorable.join('') || '—')
-console.log('调候(穷通):', yong.tiaohou)
+console.log('调候用神(穷通):', yong.tiaohouYong.join('') || '—', '(' + yong.tiaohouEl.join('') + ') ·', yong.seasonHint)
+console.log('命局诊断:', yong.diag.excess + '最旺' + (yong.diag.lack.length ? '、缺' + yong.diag.lack.join('') : ''), '· 气候偏' + yong.diag.climate)
+console.log('取舍:', yong.reconcile)
 const todayY = Interpret.dayReading(chart, Engine.buildDay(null), yong)
 console.log('今日喜忌:', todayY.yong ? todayY.yong.hit + '：' + todayY.yong.text : '—')
 
