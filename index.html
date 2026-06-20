@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>化机历 · 八字流日万年历</title>
+    <meta
+      name="description"
+      content="万年历 + 八字流日：输入生辰，浏览器本地排盘，看每天的流日如何与你的本命盘发生能量化学反应。点开每个术语都能学，福祸相依、顺势而为。数据不出本机。"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="masthead">
+        <div class="brand">化机历</div>
+        <div class="sub">万年历 · 八字流日 · 每日能量化学反应</div>
+      </header>
+
+      <!-- 万年历（始终可见） -->
+      <section id="almanac" class="card"></section>
+
+      <!-- 录入生辰 -->
+      <section id="intake" class="card">
+        <h2 class="sect-title">录入生辰 · 解锁你的化学反应</h2>
+        <form id="birth-form" class="birth-form" autocomplete="off">
+          <div class="form-grid">
+            <div class="field">
+              <label for="f-date">出生日期（公历）</label>
+              <input type="date" id="f-date" required min="1901-01-01" max="2099-12-31" />
+            </div>
+            <div class="field">
+              <label for="f-time">出生时间</label>
+              <input type="time" id="f-time" value="12:00" required />
+            </div>
+            <div class="field">
+              <label>性别</label>
+              <div class="radio-row">
+                <label><input type="radio" name="gender" value="1" checked /> 男</label>
+                <label><input type="radio" name="gender" value="0" /> 女</label>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn">排 盘</button>
+          <span class="hint">时间不确定可留 12:00，仅影响时柱</span>
+        </form>
+        <div id="intake-summary" hidden></div>
+        <p class="privacy">· 生辰仅存于本机浏览器，不上传、不联网、可随时清除 ·</p>
+      </section>
+
+      <!-- 个人化：选定日化学反应 + 本命盘（录入后出现） -->
+      <main id="personal"></main>
+
+      <!-- 教学 -->
+      <section id="learn" class="card"></section>
+
+      <!-- 易学 · 八卦五行 -->
+      <section id="yixue" class="card"></section>
+
+      <footer class="footer">
+        <div class="foot-note">
+          化机历 · 以《滴天髓》《三命通会》为底、以《道德经》为怀的传统模型现代化表达。<br />
+          描述能量倾向，仅供参考、不作宿命论断 —— 福祸相依，顺势而为。
+        </div>
+      </footer>
+    </div>
+
+    <!-- 术语讲解浮层 -->
+    <div id="pop" class="pop" hidden></div>
+    <!-- 关系连线悬停浮层 -->
+    <div id="tip" class="tip" hidden></div>
+
+    <script src="vendor/lunar.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/interpret.js"></script>
+    <script src="js/knowledge.js"></script>
+    <script src="js/analyze.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

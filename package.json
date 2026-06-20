@@ -1,0 +1,14 @@
+{
+  "name": "bazi-almanac",
+  "private": true,
+  "version": "0.1.0",
+  "description": "化机历 · 八字流日万年历 — 输入生辰，浏览器本地排盘，分析流日/流月/大运与本命盘的能量化学反应。零构建纯静态，大陆可直连。",
+  "scripts": {
+    "vendor": "node scripts/vendor.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "serve": "python3 -m http.server 5500"
+  },
+  "dependencies": {
+    "lunar-javascript": "^1.6.0"
+  }
+}
