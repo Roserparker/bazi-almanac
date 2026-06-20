@@ -33,11 +33,17 @@
   }
   function gzTok(s) { return tok(s[0], E.GAN_WUXING[s[0]]) + tok(s[1], E.ZHI_WUXING[s[1]]) }
   function refreshChart() {
-    if (state.birth) {
+    state.chart = state.st = state.yong = null
+    if (!state.birth) return
+    try {
       state.chart = E.buildChart(state.birth)
       state.st = A.strength(state.chart)
       state.yong = A.yongShen(state.chart, state.st)
-    } else { state.chart = null; state.st = null; state.yong = null }
+    } catch (e) {
+      // 生辰数据损坏/旧格式 → 清掉，避免整站启动崩溃
+      state.chart = state.st = state.yong = null
+      state.birth = null; wipe()
+    }
   }
   function term(text, kind, key) { return '<span class="term" data-kind="' + kind + '" data-key="' + key + '">' + text + '</span>' }
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') }
@@ -97,12 +103,16 @@
       '<span class="tl-ss">' + term(ss, 'shishen', ss) + '</span>' +
       favTag(el, yong) + (extra || '') + '</div>'
   }
+  function daYunNote(chart, year) {
+    var first = chart.yun.daYun.filter(function (x) { return x.ganZhi })[0]
+    return first && year < first.startYear ? '尚未起运（童限）' : '已过排定大运范围'
+  }
   function timeStackHTML(chart, yong, d) {
     var dm = chart.dayMaster.gan
     var cur = E.currentDaYun(chart, d.year)
     var rows = cur
       ? tlRow('大运', cur.ganZhi, dm, yong, '<span class="tl-x">' + cur.startAge + '岁起</span>')
-      : '<div class="tl-row"><span class="tl-label">大运</span><span class="tl-none">尚未起运（童限）</span></div>'
+      : '<div class="tl-row"><span class="tl-label">大运</span><span class="tl-none">' + daYunNote(chart, d.year) + '</span></div>'
     rows += tlRow('流年', d.liunian, dm, yong)
     rows += tlRow('流月', d.liuyue, dm, yong)
     rows += tlRow('流日', d.liuri, dm, yong)
@@ -248,7 +258,7 @@
 
   function renderToday(chart, d, reading) {
     var cur = E.currentDaYun(chart, d.year)
-    var curStr = '尚未起运（童限）'
+    var curStr = daYunNote(chart, d.year)
     if (cur) curStr = gzTok(cur.ganZhi) + '运（' + cur.startAge + '岁起 · 大运天干为你的 ' + term(E.shiShen(chart.dayMaster.gan, cur.ganZhi[0]), 'shishen', E.shiShen(chart.dayMaster.gan, cur.ganZhi[0])) + '）'
 
     // 关系图：年月日时 + 流日 一起画
@@ -302,7 +312,7 @@
         '<span class="sb-sub">月令' + st.ruler + '当令 → 日主' + st.dm + st.ws + '（' + (st.deLing ? '得令' : '失令') + '）</span></div>' +
       '<div class="sb-meter"><div class="sb-fill" style="width:' + pct + '%"></div><span class="sb-mid"></span></div>' +
       '<div class="sb-mini">帮身 ' + st.helps + ' · 耗身 ' + st.drains + '　<span class="sb-ref">仅供参考</span></div>' +
-      '<div class="sb-head"><span class="sb-tag">用神</span>喜 ' + yong.favorable.map(wxChip).join('') + '　忌 ' + yong.unfavorable.map(wxChip).join('') + '<span class="sb-sub">扶抑</span></div>' +
+      '<div class="sb-head"><span class="sb-tag">用神</span>' + (yong.favorable.length ? '喜 ' + yong.favorable.map(wxChip).join('') + '　忌 ' + yong.unfavorable.map(wxChip).join('') : '<span class="sb-balanced">命局中和 · 贵在流通，无显著喜忌</span>') + '<span class="sb-sub">' + yong.method + '</span></div>' +
       '<div class="sb-tiaohou">调候 ·《穷通宝鉴》：' + yong.tiaohou + '</div>' +
       '<div class="sb-note">' + yong.note + '</div>' +
     '</div>'

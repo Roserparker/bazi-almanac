@@ -37,7 +37,7 @@ console.log(
   '| 帮', st.helps, '耗', st.drains, '| 比', st.ratio.toFixed(2)
 )
 const yong = Analyze.yongShen(chart, st)
-console.log('用神(扶抑):', yong.strong ? '身强→喜泄克耗' : '身弱→喜生扶', yong.favorable.join(''), '| 忌', yong.unfavorable.join(''))
+console.log('用神:', yong.balanced ? '中和·贵流通' : yong.strong ? '身强→喜泄克耗' : '身弱→喜生扶', '| 喜', yong.favorable.join('') || '—', '| 忌', yong.unfavorable.join('') || '—')
 console.log('调候(穷通):', yong.tiaohou)
 const todayY = Interpret.dayReading(chart, Engine.buildDay(null), yong)
 console.log('今日喜忌:', todayY.yong ? todayY.yong.hit + '：' + todayY.yong.text : '—')

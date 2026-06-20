@@ -252,6 +252,7 @@ input[type="date"], input[type="time"] {
 .wx-chip.wx-shui { color: #14517f; border-color: rgba(29, 104, 166, 0.46); background: rgba(29, 104, 166, 0.1); }
 .sb-tiaohou { font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
 .sb-note { font-size: 11px; color: var(--ink-faint); margin-top: 4px; line-height: 1.6; }
+.sb-balanced { color: var(--dai); font-size: 13px; }
 .r-yong { border-radius: 5px; }
 .yong-喜 .r-key { color: var(--mu); }
 .yong-忌 .r-key { color: var(--huo); }

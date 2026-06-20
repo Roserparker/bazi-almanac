@@ -57,7 +57,7 @@
     })
     var total = helps + drains
     var ratio = total ? helps / total : 0.5
-    var label = ratio >= 0.58 ? '身强' : ratio >= 0.52 ? '偏强' : ratio >= 0.46 ? '中和' : ratio >= 0.4 ? '偏弱' : '身弱'
+    var label = ratio >= 0.6 ? '身强' : ratio >= 0.54 ? '偏强' : ratio >= 0.46 ? '中和' : ratio >= 0.4 ? '偏弱' : '身弱'
     return {
       dm: dm, ws: ws, ruler: ruler, deLing: ws === '旺' || ws === '相',
       helps: Math.round(helps * 10) / 10, drains: Math.round(drains * 10) / 10,
@@ -68,10 +68,11 @@
   // 用神：扶抑（依身强弱）为主 + 穷通宝鉴调候提示
   function yongShen(chart, st) {
     var dm = chart.dayMaster.wuxing
-    var strong = st.ratio >= 0.5
-    var fav, avoid
-    if (strong) { fav = [SHENG_OF[dm], KE_OF[dm], KEW_OF[dm]]; avoid = [GEN_OF[dm], dm] }
-    else { fav = [GEN_OF[dm], dm]; avoid = [SHENG_OF[dm], KE_OF[dm], KEW_OF[dm]] }
+    // 与 strength 标签同档：≥0.54 偏强/身强 → 抑；≤0.46 偏弱/身弱 → 扶；中间为「中和」无显著喜忌
+    var fav, avoid, balanced = false
+    if (st.ratio >= 0.54) { fav = [SHENG_OF[dm], KE_OF[dm], KEW_OF[dm]]; avoid = [GEN_OF[dm], dm] }
+    else if (st.ratio <= 0.46) { fav = [GEN_OF[dm], dm]; avoid = [SHENG_OF[dm], KE_OF[dm], KEW_OF[dm]] }
+    else { fav = []; avoid = []; balanced = true } // 中和：贵在流通，日常无显著喜忌
 
     var mz = chart.pillars.month.zhi, th = ''
     if ('亥子丑'.indexOf(mz) >= 0) th = '生于冬月、天寒，调候喜火暖局'
@@ -81,9 +82,12 @@
     else th = '辰戌丑未月土旺，视寒暖燥湿酌定调候'
 
     return {
-      strong: strong, favorable: fav, unfavorable: avoid,
-      method: '扶抑（依身强弱）', tiaohou: th,
-      note: '用神判定有流派分歧，此为「扶抑 + 调候」的粗估，仅供参考；穷通宝鉴全本调候表为二期精修。'
+      strong: st.ratio >= 0.54, balanced: balanced,
+      favorable: fav, unfavorable: avoid,
+      method: balanced ? '中和 · 贵流通' : '扶抑（依身强弱）', tiaohou: th,
+      note: balanced
+        ? '命局接近中和，贵在五行流通；日常无显著喜忌、顺其自然即可。仅供参考。'
+        : '用神判定有流派分歧，此为「扶抑 + 调候」的粗估，仅供参考；穷通宝鉴全本调候表为二期精修。'
     }
   }
 
