@@ -19,6 +19,11 @@
     甲: '阳', 乙: '阴', 丙: '阳', 丁: '阴', 戊: '阳',
     己: '阴', 庚: '阳', 辛: '阴', 壬: '阳', 癸: '阴'
   }
+  // 地支主气藏干（本气）——支的五行阴阳以本气论：子藏癸=阴水、午藏丁=阴火…
+  var ZHI_MAIN = {
+    子: '癸', 丑: '己', 寅: '甲', 卯: '乙', 辰: '戊', 巳: '丙',
+    午: '丁', 未: '己', 申: '庚', 酉: '辛', 戌: '戊', 亥: '壬'
+  }
   var WUXING_ORDER = ['木', '火', '土', '金', '水']
   var WEEK = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -204,7 +209,8 @@
     SHISHEN_GROUP: SHISHEN_GROUP,
     GAN_WUXING: GAN_WUXING,
     ZHI_WUXING: ZHI_WUXING,
-    GAN_YINYANG: GAN_YINYANG
+    GAN_YINYANG: GAN_YINYANG,
+    ZHI_MAIN: ZHI_MAIN
   }
 
   root.Engine = Engine
