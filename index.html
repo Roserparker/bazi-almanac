@@ -14,11 +14,21 @@
     <div class="page">
       <header class="masthead">
         <div class="brand">化机历</div>
-        <div class="sub">万年历 · 八字流日 · 每日能量化学反应</div>
+        <div class="sub">每日顺逆 · 八字流日 · 万年历</div>
       </header>
 
-      <!-- 万年历（始终可见） -->
+      <nav class="topnav">
+        <a href="#dashboard">今日</a><a href="#almanac">万年历</a><a href="#personal">命盘</a><a href="#learn">学堂</a><a href="#yixue">易学</a>
+      </nav>
+
+      <!-- 今日仪表盘（首屏） -->
+      <section id="dashboard" class="card dash"></section>
+
+      <!-- 万年历（带顺逆点） -->
       <section id="almanac" class="card"></section>
+
+      <!-- 个人化：选定日详解 + 本命盘（录入后出现） -->
+      <main id="personal"></main>
 
       <!-- 录入生辰 -->
       <section id="intake" class="card">
@@ -48,9 +58,6 @@
         <p class="privacy">· 生辰仅存于本机浏览器，不上传、不联网、可随时清除 ·</p>
       </section>
 
-      <!-- 个人化：选定日化学反应 + 本命盘（录入后出现） -->
-      <main id="personal"></main>
-
       <!-- 教学 -->
       <section id="learn" class="card"></section>
 
@@ -75,6 +82,13 @@
     <script src="js/interpret.js"></script>
     <script src="js/knowledge.js"></script>
     <script src="js/analyze.js"></script>
+    <script src="js/daily.js"></script>
+    <script src="js/ui/format.js"></script>
+    <script src="js/ui/popups.js"></script>
+    <script src="js/ui/almanac.js"></script>
+    <script src="js/ui/dashboard.js"></script>
+    <script src="js/ui/personal.js"></script>
+    <script src="js/ui/learn.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>
