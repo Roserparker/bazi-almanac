@@ -61,6 +61,11 @@
     }
     return '<span class="wxb" data-gz="' + gz + '">' + elIcon(ge, gy) + elIcon(ze, zy) + label + '</span>'
   }
+  // 节日小签（cn=朱 west=黛）
+  function festChips(list) {
+    if (!list || !list.length) return ''
+    return list.map(function (f) { return '<span class="dp-fest f-' + f.kind + '">' + f.name + '</span>' }).join('')
+  }
   function daYunNote(chart, year) {
     var first = chart.yun.daYun.filter(function (x) { return x.ganZhi })[0]
     return first && year < first.startYear ? '尚未起运（童限）' : '已过排定大运范围'
@@ -70,6 +75,6 @@
     WX: WX, ELC: ELC, REL_COLOR: REL_COLOR, WEEK_CN: WEEK_CN, GANSET: GANSET, TODAY: TODAY,
     assign: assign, pad2: pad2, pad4: pad4, ymd: ymd, same: same,
     tok: tok, gzTok: gzTok, term: term, esc: esc, wxChip: wxChip, daYunNote: daYunNote,
-    elIcon: elIcon, wxBadge: wxBadge
+    elIcon: elIcon, wxBadge: wxBadge, festChips: festChips
   }
 })()

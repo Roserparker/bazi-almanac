@@ -27,7 +27,7 @@
     var d = E.buildDay(F.TODAY)
     var dateLine =
       '<div class="dash-date"><b>' + d.solarYmd + '</b> ' + d.weekday + ' · 今天' +
-      '<span class="dash-lunar">' + d.lunarStr + ' · 属' + d.shengXiao + (d.jieQi ? ' <span class="dp-jq">【' + d.jieQi + '】</span>' : '') + '</span></div>'
+      '<span class="dash-lunar">' + d.lunarStr + ' · 属' + d.shengXiao + (d.jieQi ? ' <span class="dp-jq">【' + d.jieQi + '】</span>' : '') + '</span>' + F.festChips(d.festivals) + '</div>'
     var gzLine =
       '<div class="dash-gz">' +
         '<span><span class="g">流年</span>' + F.gzTok(d.liunian) + '</span>' +

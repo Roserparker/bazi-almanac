@@ -183,6 +183,25 @@ console.log('\n=== Daily 文案引擎断言 ===')
     assert(Daily.termHint('hint', '化机指数', ctx), '化机指数贴士缺失')
     console.log('  ✓ 化机指数：', ix.score, ix.band, JSON.stringify(ix.parts))
   }
+
+  // 9) 节日：库节日（含浮动）+ 自建美国节日表
+  {
+    const f = (y, m, d) => Engine.buildDay({ year: y, month: m, day: d }).festivals.map((x) => x.kind + ':' + x.name).join('|')
+    assert(f(2026, 10, 1).includes('cn:国庆节'), '国庆节缺失')
+    assert(f(2026, 2, 17).includes('cn:春节'), '春节缺失')
+    assert(f(2026, 6, 19).includes('cn:端午节'), '端午节缺失')
+    assert(f(2026, 11, 26).includes('west:感恩节'), '感恩节缺失(4th Thu)')
+    assert(f(2026, 5, 10).includes('west:母亲节'), '母亲节缺失(2nd Sun)')
+    assert(f(2026, 7, 4).includes('west:美国独立日'), '独立日缺失')
+    assert(f(2026, 1, 19).includes('west:马丁路德金日'), 'MLK日缺失(3rd Mon)')
+    assert(f(2026, 5, 25).includes('west:阵亡将士日'), '阵亡将士日缺失(last Mon)')
+    assert(f(2026, 9, 7).includes('west:美国劳工节'), '美国劳工节缺失(1st Mon)')
+    assert(f(2026, 12, 25).includes('west:圣诞节'), '圣诞节缺失')
+    assert(!f(2026, 5, 18) || !f(2026, 5, 18).includes('阵亡将士'), '非末周一不应有阵亡将士日')
+    const md = Engine.monthDays(2026, 7).find((x) => x.day === 4)
+    assert(md.fest && md.fest.name === '美国独立日', 'monthDays 未带节日')
+    console.log('  ✓ 节日：国庆/春节/端午 + 感恩/母亲/独立/MLK/阵亡将士/劳工/圣诞（含浮动规则）')
+  }
 }
 
 console.log('\nLOGIC OK')

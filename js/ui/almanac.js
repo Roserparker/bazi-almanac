@@ -117,7 +117,7 @@
       '<div class="day-panel">' +
         '<div class="dp-top">' +
           '<span class="dp-date">' + d.solarYmd + ' ' + d.weekday + (F.same(sel, F.TODAY) ? ' · 今天' : '') + '</span>' +
-          '<span class="dp-lunar">' + d.lunarStr + ' · 属' + d.shengXiao + (d.jieQi ? ' <span class="dp-jq">【' + d.jieQi + '】</span>' : '') + '</span>' +
+          '<span class="dp-lunar">' + d.lunarStr + ' · 属' + d.shengXiao + (d.jieQi ? ' <span class="dp-jq">【' + d.jieQi + '】</span>' : '') + '</span>' + F.festChips(d.festivals) +
         '</div>' +
         (state.chart
           ? idxHTML(state, d) + timeStackHTML(state.chart, state.yong, d) + lr
@@ -149,7 +149,11 @@
       var solY = F.pad4(y) + '-' + F.pad2(m) + '-' + F.pad2(d.day)
       var isToday = solY === F.ymd(F.TODAY)
       var isSel = F.same({ year: y, month: m, day: d.day }, state.sel)
-      var sub = d.jieQi ? d.jieQi : d.lunarDayCn === '初一' ? d.lunarMonthCn + '月' : d.lunarDayCn
+      // 副行优先级：节气（本站根基）> 节日 > 初一月名 > 农历日
+      var sub, subCls = ''
+      if (d.jieQi) { sub = d.jieQi; subCls = ' jq' }
+      else if (d.fest) { sub = d.fest.name; subCls = ' f-' + d.fest.kind }
+      else sub = d.lunarDayCn === '初一' ? d.lunarMonthCn + '月' : d.lunarDayCn
       var dot = ''
       if (canDot) {
         var cls = D.dayScore(d.liuriGan, d.liuriZhi, state.yong)
@@ -159,7 +163,7 @@
       grid +=
         '<button class="cal-cell' + (isToday ? ' today' : '') + (isSel ? ' sel' : '') + '" data-action="selectDay" data-day="' + d.day + '">' + dot +
           '<span class="c-num">' + d.day + '</span>' +
-          '<span class="c-sub' + (d.jieQi ? ' jq' : '') + '">' + sub + '</span>' +
+          '<span class="c-sub' + subCls + '">' + sub + '</span>' +
           '<span class="c-gz">' + d.ganZhiDay + '</span>' +
         '</button>'
     })

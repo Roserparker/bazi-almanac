@@ -136,6 +136,39 @@
     }
   }
 
+  // —— 节日 ——
+  // 库自带：农历节日（春节/端午/中秋/七夕…）+ 公历节日（元旦/情人节/母亲节/感恩节/圣诞…含浮动算法）。
+  // 自建补充：库未收的美国联邦/民俗节日。kind：cn=中国（朱），west=西方/国际（黛）。
+  var CN_SOLAR_FEST = { 元旦节: 1, 妇女节: 1, 植树节: 1, 劳动节: 1, 青年节: 1, 儿童节: 1, 建党节: 1, 建军节: 1, 教师节: 1, 国庆节: 1 }
+  // 只展示大众熟知的节日（库里还夹带世界住房日等联合国纪念日，不入素静的历面）
+  var FEST_ALLOW = {
+    元旦节: 1, 春节: 1, 除夕: 1, 元宵节: 1, 龙头节: 1, 情人节: 1, 妇女节: 1, 植树节: 1, 愚人节: 1,
+    劳动节: 1, 青年节: 1, 母亲节: 1, 端午节: 1, 儿童节: 1, 父亲节: 1, 建党节: 1, 建军节: 1,
+    七夕节: 1, 中元节: 1, 教师节: 1, 中秋节: 1, 国庆节: 1, 重阳节: 1, 腊八节: 1,
+    万圣节前夜: 1, 感恩节: 1, 平安夜: 1, 圣诞节: 1
+  }
+  var US_FIXED = { '7-4': '美国独立日', '11-11': '退伍军人节' }
+  var US_FLOAT = [
+    { m: 1, w: 1, nth: 3, name: '马丁路德金日' },
+    { m: 2, w: 1, nth: 3, name: '总统日' },
+    { m: 5, w: 1, nth: -1, name: '阵亡将士日' },
+    { m: 9, w: 1, nth: 1, name: '美国劳工节' }
+  ]
+  function festivalsOf(solar, lunar) {
+    var out = []
+    lunar.getFestivals().forEach(function (n) { if (FEST_ALLOW[n]) out.push({ name: n, kind: 'cn' }) })
+    solar.getFestivals().forEach(function (n) { if (FEST_ALLOW[n]) out.push({ name: n, kind: CN_SOLAR_FEST[n] ? 'cn' : 'west' }) })
+    var m = solar.getMonth(), d = solar.getDay(), w = solar.getWeek()
+    var fx = US_FIXED[m + '-' + d]
+    if (fx) out.push({ name: fx, kind: 'west' })
+    US_FLOAT.forEach(function (r) {
+      if (r.m !== m || r.w !== w) return
+      if (r.nth === -1) { if (d + 7 > new Date(solar.getYear(), m, 0).getDate()) out.push({ name: r.name, kind: 'west' }) }
+      else if (Math.ceil(d / 7) === r.nth) out.push({ name: r.name, kind: 'west' })
+    })
+    return out
+  }
+
   // —— 取某日（默认今日）的流年/流月/流日 + 万年历基本信息 ——
   // 用当天正午建 EightChar，立春/节气边界与本命盘一致
   function buildDay(date) {
@@ -160,7 +193,8 @@
       sha: lunar.getDaySha(), // 煞方
       zhiXing: lunar.getZhiXing(), // 建除十二神
       yi: lunar.getDayYi(), // 宜（数组）
-      ji: lunar.getDayJi() // 忌（数组）
+      ji: lunar.getDayJi(), // 忌（数组）
+      festivals: festivalsOf(solar, lunar) // 节日 [{name, kind}]
     }
   }
 
@@ -171,6 +205,7 @@
     for (var dd = 1; dd <= dim; dd++) {
       var s = Solar.fromYmd(year, month, dd)
       var lunar = s.getLunar()
+      var fs = festivalsOf(s, lunar)
       out.push({
         day: dd,
         week: s.getWeek(),
@@ -180,7 +215,8 @@
         ganZhiDay: lunar.getDayInGanZhi(),
         liuriGan: lunar.getDayGan(),
         liuriZhi: lunar.getDayZhi(),
-        jieQi: lunar.getJieQi()
+        jieQi: lunar.getJieQi(),
+        fest: fs.length ? fs[0] : null
       })
     }
     return out
@@ -202,6 +238,7 @@
     buildChart: buildChart,
     buildDay: buildDay,
     monthDays: monthDays,
+    festivalsOf: festivalsOf,
     currentDaYun: currentDaYun,
     shiShen: shiShen,
     generates: generates,
