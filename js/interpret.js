@@ -111,12 +111,89 @@
     卯酉: '金木相格——酉金克卯木（金主胜）', 寅申: '金木相格——申金克寅木（金主胜）',
     辰戌: '辰戌皆土，同气朋冲，主开火 / 水之库', 丑未: '丑未皆土，同气朋冲，主开金 / 木之库'
   }
-  function posName(k) { return k === 'liuri' ? '流日' : (LABEL[k] || '') + '柱' }
+  function posName(k) { return k === 'liuri' || k === 'liuyue' || k === 'liunian' || k === 'dayun' ? LABEL[k] : (LABEL[k] || '') + '柱' }
   function liuriTail(ms) {
     if (!ms.some(function (m) { return m.key === 'liuri' })) return ''
     var natal = ms.filter(function (m) { return m.key !== 'liuri' })[0]
     if (!natal) return ''
     return '——' + (POS_MEAN[natal.key] || '') + '；流日只主一天，短而轻（不比流月 / 流年 / 大运持久），宜顺其势、不必硬扛。'
+  }
+
+  // ———— 同型同字关系合并（年午+月午 与流日丑相害 → 一条）————
+  function mergeRelations(rels) {
+    var map = {}, out = []
+    rels.forEach(function (r) {
+      var sig = r.type + '|' + r.chars.slice().sort().join('')
+      if (map[sig]) {
+        r.members.forEach(function (m) { if (map[sig].members.indexOf(m) < 0) map[sig].members.push(m) })
+        map[sig].merged = true
+      } else {
+        var c = { type: r.type, kind: r.kind, chars: r.chars.slice(), element: r.element, desc: r.desc, members: r.members.slice(), merged: false }
+        map[sig] = c; out.push(c)
+      }
+    })
+    return out
+  }
+  // 把合并后的成员按「所属字」分成两组（pair 型关系用）
+  function pairGroups(rel, ms) {
+    var g = rel.kind === 'gan' ? 'gan' : 'zhi'
+    var aChar = rel.chars[0], bChar = rel.chars[1]
+    var aList = ms.filter(function (m) { return m[g] === aChar })
+    var bList = ms.filter(function (m) { return m[g] === bChar && aList.indexOf(m) < 0 })
+    return { aChar: aChar, bChar: bChar, aList: aList, bList: bList }
+  }
+  function sideName(list, ch) {
+    if (!list.length) return ch
+    return list.map(function (m) { return posName(m.key) }).join('、') + ch
+  }
+  // 合并版富文本（不带逐条尾注；尾注由 relTailNote 统一给一次）
+  function explainMerged(rel, positions) {
+    var pmap = {}
+    positions.forEach(function (p) { pmap[p.key] = p })
+    var ms = rel.members.map(function (k) { return pmap[k] }).filter(Boolean)
+    if (ms.length < 2) return rel.desc
+    if (rel.type === '三合' || rel.type === '三会') {
+      return rel.chars.join('') + ' ' + rel.type + (rel.element || '') + (rel.type === '三合' ? '局' : '方') + '。三支结成一气、力量汇聚成势：主合力、成事、目标一致。'
+    }
+    if (rel.type === '刑' && ms.length > 2) {
+      return rel.chars.join('') + ' 三刑。彼此摩擦、磨合、消耗；提醒放慢、调整方式，并非灾祸。'
+    }
+    var pg = pairGroups(rel, ms)
+    var a = sideName(pg.aList, pg.aChar), b = sideName(pg.bList, pg.bChar)
+    if (rel.type === '五合') return a + ' 与 ' + b + ' 天干五合' + (rel.element ? '化' + rel.element : '') + '。两股能量结成一对、彼此吸引：主情感、合作、合约与转化；也可能被「合住」而牵绊。'
+    if (rel.type === '冲') {
+      var mech = CHONG_MECH[pg.aChar + pg.bChar] || CHONG_MECH[pg.bChar + pg.aChar] || '二气相对'
+      return a + ' 与 ' + b + ' 相冲（' + mech + '）。两气正面相撞：主动荡、变化、走动——该动则是突破之机，该静被冲则起波澜。'
+    }
+    if (rel.type === '合') return a + ' 与 ' + b + ' 六合' + (rel.element ? '化' + rel.element : '') + '。主亲近、结盟、缓和；也可能黏着、牵绊、分心。'
+    if (rel.type === '害') return a + ' 与 ' + b + ' 相害。暗里的小妨碍与嫌隙，多在细节与人情；留心则可避，不必惊惧。'
+    if (rel.type === '破') return a + ' 与 ' + b + ' 相破。小破耗、松动；把收尾做稳即可，影响通常轻微。'
+    if (rel.type === '刑') return a + ' 与 ' + b + ' 相刑。彼此摩擦、磨合、消耗；提醒放慢、调整方式，并非灾祸。'
+    return rel.desc
+  }
+  // 涉及宫位的尾注（整组只出现一次）
+  function relTailNote(rels) {
+    var keys = [], hasLiuri = false
+    rels.forEach(function (r) {
+      r.members.forEach(function (k) {
+        if (k === 'liuri') { hasLiuri = true; return }
+        if (POS_MEAN[k] && keys.indexOf(k) < 0) keys.push(k)
+      })
+    })
+    if (!keys.length) return ''
+    var order = ['year', 'month', 'day', 'time']
+    keys.sort(function (a, b) { return order.indexOf(a) - order.indexOf(b) })
+    var t = '被触动的宫位：' + keys.map(function (k) { return POS_MEAN[k] }).join('；') + '。'
+    if (hasLiuri) t += '流日只主一天，短而轻（不比流月 / 流年 / 大运持久），宜顺其势、不必硬扛。'
+    return t
+  }
+  // 选定日 × 命局：合并去重后的关系 + 一次性尾注
+  function mergedDayRelations(chart, day) {
+    var pos = positionsOf(chart)
+    pos.push({ key: 'liuri', label: '流日', gan: day.liuriGan, zhi: day.liuriZhi })
+    var rels = mergeRelations(findRelations(pos).filter(function (r) { return r.members.indexOf('liuri') >= 0 }))
+    rels.forEach(function (r) { r.rich = explainMerged(r, pos) })
+    return { positions: pos, relations: rels, tail: relTailNote(rels) }
   }
   // 把任意两 / 三位之间的关系展开成「具体到这两个字」的可读解读（供连线悬停 + 列表）
   function explainRelation(rel, positions) {
@@ -211,52 +288,63 @@
   }
 
   // 分层解读：{ title, layers:[{tag,text}] }（L1 是什么 / L2 怎么合怎么克 / L3 对日主 / L4 暗机）
+  // 兼容 mergeRelations 的合并关系（同型同字多柱共一条）
   function relationLayers(rel, positions) {
     var pmap = {}
     positions.forEach(function (p) { pmap[p.key] = p })
     var ms = rel.members.map(function (k) { return pmap[k] }).filter(Boolean)
     if (ms.length < 2) return { title: rel.type, layers: [{ tag: '说明', text: rel.desc }] }
-    var a = ms[0], b = ms[1], el = rel.element ? '·' + rel.element : '', L = []
-    function pair(g) { return ms.map(function (m) { return posName(m.key) + m[g] }).join(' 与 ') }
+    var el = rel.element ? '·' + rel.element : '', L = []
+    function pd() {
+      // 「谁与谁」：按所属字分两侧（合并关系一侧可有多柱）
+      var pg = pairGroups(rel, ms)
+      return { a: sideName(pg.aList, pg.aChar), b: sideName(pg.bList, pg.bChar) }
+    }
     if (rel.type === '五合') {
+      var g5 = pd()
       L.push({ tag: '是什么', text: '天干五合：两个天干结成一对、彼此吸引，像结盟或情感纽带。' })
-      L.push({ tag: '怎么合', text: posName(a.key) + a.gan + ' 与 ' + posName(b.key) + b.gan + ' 阴阳相吸而合' + (rel.element ? '，可合化为「' + rel.element + '」（两气并力，性质偏向' + rel.element + '）' : '') + '。' })
+      L.push({ tag: '怎么合', text: g5.a + ' 与 ' + g5.b + ' 阴阳相吸而合' + (rel.element ? '，可合化为「' + rel.element + '」（两气并力，性质偏向' + rel.element + '）' : '') + '。' })
       L.push({ tag: '对日主', text: '合主亲近、合作、合约、转化；也可能把该动的力量「合住」、牵绊住，使人黏着不前。' + liuriTail(ms) })
       L.push({ tag: '暗机', text: '合化成的若正是你需要的五行，是助力；若合住了用神 / 喜用，反误事。能否合化，看月令与有无妒合争合。' })
-      return { title: a.gan + b.gan + ' 五合' + el, layers: L }
+      return { title: rel.chars.join('') + ' 五合' + el, layers: L }
     }
     if (rel.type === '冲') {
-      var note = CHONG_NOTE[a.zhi + b.zhi] || CHONG_NOTE[b.zhi + a.zhi] || '二气相对'
+      var gc = pd()
+      var note = CHONG_NOTE[rel.chars[0] + rel.chars[1]] || CHONG_NOTE[rel.chars[1] + rel.chars[0]] || '二气相对'
       L.push({ tag: '是什么', text: '相冲：两气方位相对、正面相撞，主动荡、变化、走动、心绪起伏。' })
-      L.push({ tag: '怎么冲', text: posName(a.key) + a.zhi + ' 冲 ' + posName(b.key) + b.zhi + '（' + note + '）。冲的内核其实是「克」。' })
+      L.push({ tag: '怎么冲', text: gc.a + ' 冲 ' + gc.b + '（' + note + '）。冲的内核其实是「克」。' })
       L.push({ tag: '对日主', text: '该动时，冲是突破、换轨的契机；该静却被冲，则起波澜。' + liuriTail(ms) })
       L.push({ tag: '暗机', text: '冲能「开库」（辰戌丑未相冲打开墓库）；冲用神为患、冲去忌神反吉；近冲力大、隔位冲力小。' })
-      return { title: a.zhi + b.zhi + ' 相冲', layers: L }
+      return { title: rel.chars.join('') + ' 相冲', layers: L }
     }
     if (rel.type === '合') {
+      var g6 = pd()
       L.push({ tag: '是什么', text: '地支六合：两支相合相恋，主亲近、结盟、缓和。' })
-      L.push({ tag: '怎么合', text: posName(a.key) + a.zhi + ' 合 ' + posName(b.key) + b.zhi + (rel.element ? '，可合化「' + rel.element + '」' : '') + '。' })
+      L.push({ tag: '怎么合', text: g6.a + ' 合 ' + g6.b + (rel.element ? '，可合化「' + rel.element + '」' : '') + '。' })
       L.push({ tag: '对日主', text: '合主和气、合作、牵连；也可能黏着、绊住、分心。' + liuriTail(ms) })
       L.push({ tag: '暗机', text: '合能解冲、也能合绊用神；合而不化只是「牵连」，合化则性质转变。' })
-      return { title: a.zhi + b.zhi + ' 六合' + el, layers: L }
+      return { title: rel.chars.join('') + ' 六合' + el, layers: L }
     }
     if (rel.type === '害') {
+      var gh = pd()
       L.push({ tag: '是什么', text: '相害（穿）：暗里的妨碍、嫌隙、小损耗。' })
-      L.push({ tag: '怎么害', text: pair('zhi') + ' 相害——多因一方的「合」被另一方冲破而生怨。' })
+      L.push({ tag: '怎么害', text: gh.a + ' 与 ' + gh.b + ' 相害——多因一方的「合」被另一方冲破而生怨。' })
       L.push({ tag: '对日主', text: '多在细节、人情、健康的暗处使绊；留心则可避，不必惊惧。' + liuriTail(ms) })
       L.push({ tag: '暗机', text: '害是较轻的暗伤，常被冲合掩盖；看它落在哪个六亲宫位，留意该处人情摩擦。' })
       return { title: rel.chars.join('') + ' 相害', layers: L }
     }
     if (rel.type === '破') {
+      var gp = pd()
       L.push({ tag: '是什么', text: '相破：小的破耗、松动，像约定打了折扣。' })
-      L.push({ tag: '怎么破', text: pair('zhi') + ' 相破。' })
+      L.push({ tag: '怎么破', text: gp.a + ' 与 ' + gp.b + ' 相破。' })
       L.push({ tag: '对日主', text: '影响通常轻微，把收尾做稳即可。' + liuriTail(ms) })
       L.push({ tag: '暗机', text: '破力最轻，常可忽略，多与冲合并看。' })
       return { title: rel.chars.join('') + ' 相破', layers: L }
     }
     if (rel.type === '刑') {
+      var gx = ms.length === 2 && rel.chars.length === 2 && rel.chars[0] !== rel.chars[1] ? pd() : null
       L.push({ tag: '是什么', text: '相刑：彼此摩擦、磨合、消耗（恃势 / 无恩 / 无礼之刑，及自刑）。' })
-      L.push({ tag: '怎么刑', text: rel.chars.join('') + ' 相刑。' })
+      L.push({ tag: '怎么刑', text: (gx ? gx.a + ' 与 ' + gx.b : ms.map(function (m) { return posName(m.key) + m.zhi }).join('、')) + ' 相刑。' })
       L.push({ tag: '对日主', text: '提醒放慢、调整方式、收敛锋芒，并非灾祸。' + liuriTail(ms) })
       L.push({ tag: '暗机', text: '刑常主关系反复、是非或身体某处反复；自刑多为自我消耗。' })
       return { title: rel.chars.join('') + ' 相刑', layers: L }
@@ -276,6 +364,10 @@
     relationLayers: relationLayers,
     chartRelations: chartRelations,
     dayRelations: dayRelations,
+    mergeRelations: mergeRelations,
+    mergedDayRelations: mergedDayRelations,
+    explainMerged: explainMerged,
+    relTailNote: relTailNote,
     dayReading: dayReading,
     todayReading: dayReading, // 兼容旧名
     explainRelation: explainRelation,
