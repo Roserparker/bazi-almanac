@@ -14,8 +14,10 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 require(resolve(root, 'js/engine.js'))
 require(resolve(root, 'js/interpret.js'))
 require(resolve(root, 'js/analyze.js'))
+require(resolve(root, 'js/daily.js'))
 
-const { Engine, Interpret, Analyze } = globalThis
+const { Engine, Interpret, Analyze, Daily } = globalThis
+function assert(cond, msg) { if (!cond) { console.error('✗ ASSERT FAIL:', msg); process.exit(1) } }
 
 const birth = { year: 1990, month: 6, day: 15, hour: 14, minute: 30, gender: 1 }
 const chart = Engine.buildChart(birth)
@@ -89,6 +91,98 @@ console.log('\n=== 关系富文本验证（未来 60 天内首个有流日关系
     }
   }
   if (!found) console.log('  （60 天内该命例无流日关系，属正常）')
+}
+
+console.log('\n=== Daily 文案引擎断言 ===')
+{
+  // 1) 矩阵完整：10 神 × xi/ji/ping 无空格；xi/ji 各含 s/w 两套
+  const SS = ['比肩', '劫财', '食神', '伤官', '正财', '偏财', '正官', '七杀', '正印', '偏印']
+  SS.forEach((s) => {
+    const m = Daily.M[s]
+    assert(m && m.xi && m.ji && m.ping, s + ' 矩阵缺层')
+    ;['xi', 'ji'].forEach((h) => {
+      assert(m[h].theme && m[h].s && m[h].w && m[h].s.yi && m[h].s.ji && m[h].w.yi && m[h].w.ji, s + '.' + h + ' 缺文案')
+      assert(m[h].s.yi !== m[h].w.yi, s + '.' + h + ' 强弱宜文案未区分')
+    })
+    assert(m.ping.theme && m.ping.yi && m.ping.ji, s + '.ping 缺文案')
+    assert(Daily.QUOTES[s] && Daily.QUOTES[s].length >= 2, s + ' 引句池不足')
+    assert(Daily.SS_VERSE[s] && Daily.SS_VERSE[s].length >= 2, s + ' 谶言取象不足')
+  })
+  ;['tiaohou', 'xi', 'ping', 'ji'].forEach((h) => assert(Daily.ZOU_VERSE[h] && Daily.ZOU_VERSE[h].length >= 2, h + ' 奏对池不足'))
+  '甲乙丙丁戊己庚辛壬癸'.split('').forEach((g) => assert(Daily.GAN_NOTE[g] && Daily.GAN_NOTE[g].shi, g + ' 体性诗缺'))
+  console.log('  ✓ 矩阵 10神×3态×强弱 全满 · 引句/谶言/奏对/体性诗池完整')
+
+  // 2) 干支双计：干喜支忌 → 弱顺；干忌支平 → 留意
+  const y2 = { favorable: ['金'], unfavorable: ['火'], tiaohouYong: [] }
+  assert(Daily.dayHit(y2, '金', '火', '庚').hit === 'xi', '干喜支忌应为弱顺')
+  assert(Daily.dayHit(y2, '火', '土', '丙').hit === 'ji', '干忌应为留意')
+  assert(Daily.dayHit(y2, '土', '火', '戊').hit === 'ji', '支忌应拉低为留意')
+  // 调候按「用神字」精确命中，且优先于忌；同五行异字不算
+  const y3 = { favorable: [], unfavorable: ['木'], tiaohouYong: ['甲'] }
+  assert(Daily.dayHit(y3, '木', '木', '甲').hit === 'tiaohou', '调候字命中应优先于忌')
+  assert(Daily.dayHit(y3, '木', '木', '乙').hit === 'ji', '同五行异字不应算调候')
+  console.log('  ✓ 顺逆判定：干0.6/支0.4 双计 · 调候按字命中且优先')
+
+  // 3) 同日稳定、隔日轮换
+  const d1 = { year: 2026, month: 7, day: 2 }, d2 = { year: 2026, month: 7, day: 3 }
+  assert(Daily.pickQuote('七杀', d1).t === Daily.pickQuote('七杀', d1).t, '同日引句应稳定')
+  const t1 = Daily.dailyText(chart, st, yong, Engine.buildDay(d1))
+  const t1b = Daily.dailyText(chart, st, yong, Engine.buildDay(d1))
+  assert(t1.quote.t === t1b.quote.t && t1.zhen.zou === t1b.zhen.zou, '同日全量输出应稳定')
+  console.log('  ✓ 同日稳定；示例谶言：', t1.zhen.chen.join('，'), '/', t1.zhen.zou.slice(0, 18) + '…')
+
+  // 4) 文案随日变化（60 天内至少出现 3 种不同主题）
+  const themes = new Set()
+  for (let i = 0; i < 60; i++) {
+    const dt = new Date(2026, 6, 2 + i)
+    const dd = Engine.buildDay({ year: dt.getFullYear(), month: dt.getMonth() + 1, day: dt.getDate() })
+    themes.add(Daily.dailyText(chart, st, yong, dd).theme)
+  }
+  assert(themes.size >= 6, '60 天主题种类过少: ' + themes.size)
+  console.log('  ✓ 60 天出现', themes.size, '种主题')
+
+  // 5) 关系合并去重：同型同字只出现一条，且富文本不再逐条带尾巴
+  const dd0 = Engine.buildDay({ year: 2026, month: 7, day: 2 }) // 丁丑日：年午/月午 与 丑 相害 ×2 → 应并 1 条
+  const md = Interpret.mergedDayRelations(chart, dd0)
+  const haiCount = md.relations.filter((x) => x.type === '害').length
+  assert(haiCount === 1, '午丑相害应合并为 1 条，实得 ' + haiCount)
+  const boiler = '流日只主一天'
+  assert(md.relations.every((x) => x.rich.indexOf(boiler) < 0), '富文本不应逐条带尾巴')
+  assert(md.tail.indexOf(boiler) >= 0, '尾注应集中出现一次')
+  console.log('  ✓ 关系合并：害×2 → 1 条；尾注一次化')
+  md.relations.forEach((x) => console.log('    [' + x.type + '] ' + x.rich))
+  console.log('    尾注:', md.tail.slice(0, 60) + '…')
+
+  // 6) dayScore 打点分类与 dayHit 一致
+  assert(['tiaohou', 'xi', 'ping', 'ji'].indexOf(Daily.dayScore(dd0.liuriGan, dd0.liuriZhi, yong)) >= 0, 'dayScore 分类非法')
+  console.log('  ✓ dayScore 分类合法')
+
+  // 7) 悬停贴士 termHint：两段式（通义 + 于你/臣曰）
+  require(resolve(root, 'js/knowledge.js'))
+  const ctx = { chart, st, yong }
+  const h1 = Daily.termHint('hint', '调候日', ctx)
+  assert(h1 && h1.what.includes('穷通宝鉴') && h1.you.includes(yong.tiaohouYong.join('')) && h1.chen.includes('臣'), '调候日贴士不完整')
+  const h2 = Daily.termHint('shishen', '七杀', ctx)
+  assert(h2 && h2.what && h2.you.includes('日主' + chart.dayMaster.gan) && h2.chen.startsWith('臣曰'), '七杀个性化贴士不完整')
+  const h3 = Daily.termHint('wuxing', '火', ctx)
+  assert(h3 && h3.you.includes('忌神'), '五行贴士应标出火=忌神')
+  ;['顺', '平', '留意', '身强', '身弱', '中和'].forEach((k) => assert(Daily.termHint('hint', k, ctx), k + ' 贴士缺失'))
+  console.log('  ✓ 悬停贴士：调候日/顺逆/身强弱 + 十神五行个性化（含臣曰）')
+  console.log('    示例·七杀贴士:', h2.you, h2.chen)
+
+  // 8) 化机指数：界内、分档、部件齐全、同日稳定、忌日低于中平
+  {
+    const dJi = Engine.buildDay({ year: 2026, month: 7, day: 2 }) // 丁丑 · 忌日
+    const ix = Daily.dayIndex(chart, st, yong, dJi)
+    assert(ix && ix.score >= 6 && ix.score <= 97, '指数越界')
+    assert(['昂扬', '顺畅', '平稳', '收敛', '蛰养'].includes(ix.band), '分档名非法')
+    assert('fit' in ix.parts && 'layers' in ix.parts && 'motion' in ix.parts, '指数部件缺失')
+    assert(ix.score < 50, '忌日指数应低于中平，实得 ' + ix.score)
+    const ix2 = Daily.dayIndex(chart, st, yong, dJi)
+    assert(ix2.score === ix.score, '同日指数应稳定')
+    assert(Daily.termHint('hint', '化机指数', ctx), '化机指数贴士缺失')
+    console.log('  ✓ 化机指数：', ix.score, ix.band, JSON.stringify(ix.parts))
+  }
 }
 
 console.log('\nLOGIC OK')
