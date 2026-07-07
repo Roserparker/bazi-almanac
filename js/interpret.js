@@ -158,6 +158,9 @@
     if (rel.type === '刑' && ms.length > 2) {
       return rel.chars.join('') + ' 三刑。彼此摩擦、磨合、消耗；提醒放慢、调整方式，并非灾祸。'
     }
+    if (rel.type === '刑' && rel.chars.length === 2 && rel.chars[0] === rel.chars[1]) {
+      return ms.map(function (m) { return posName(m.key) + m.zhi }).join('、') + ' ' + rel.chars[0] + rel.chars[0] + ' 自刑。自我较劲与内耗之象；提醒松一松对自己的苛责，并非灾祸。'
+    }
     var pg = pairGroups(rel, ms)
     var a = sideName(pg.aList, pg.aChar), b = sideName(pg.bList, pg.bChar)
     if (rel.type === '五合') return a + ' 与 ' + b + ' 天干五合' + (rel.element ? '化' + rel.element : '') + '。两股能量结成一对、彼此吸引：主情感、合作、合约与转化；也可能被「合住」而牵绊。'

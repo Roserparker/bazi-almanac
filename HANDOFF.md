@@ -1,7 +1,7 @@
 # HANDOFF · 给接手这个项目的 AI（或未来的我）
 
 > 目的：让你 5 分钟内接上手——知道这是什么、做到哪、半成品在哪、怎么继续。
-> 先读本文件 →`设计备忘录.md`→`教学设计备忘.md`→`TODO.md`。
+> 先读本文件 →`设计备忘录.md`→`设计-紫微与观象台.md`→`教学设计备忘.md`→`TODO.md`。
 
 ## 一、这是什么
 **化机历**：一个**零构建纯静态网页**的「每日顺逆仪表盘 + 八字流日万年历 + 易学学习汇聚点」。
@@ -22,6 +22,12 @@
 - `js/interpret.js` — 关系内核：`findRelations/mergeRelations`（**同型同字合并**，如年午+月午与流日丑相害→一条）/`mergedDayRelations`（含一次性宫位尾注）/`relationLayers`（L1–L4 分层，合并感知）/`dayReading`（legacy）。`window.Interpret`。
 - `js/daily.js` — **每日文案引擎（本轮心脏）**：`SHISHEN_DAY` 十神×顺逆×身强弱矩阵（语料自三命通会/滴天髓/穷通/道德经，出处内嵌）、`QUOTES` 引句池（按日轮换）、`GAN_NOTE` 十干体性诗、`SS_VERSE/ZOU_VERSE` **谶言·丞相奏对**、`dayHit`（干0.6/支0.4 双计，**调候按用神字精确命中**）、`dayScore`（万年历打点）、`dailyText`、**`termHint` 名词悬停贴士组装**（两段式：通义 + 于你·臣曰；调候日/顺/平/留意/身强弱 + 十神五行个性化）。`window.Daily`，node 可测。
 - `js/knowledge.js` — 教学知识库（纯数据）：intro/wuxing/shishen/relations/terms/bagua/yixue。
+- `js/ziwei.js` —（2026-07-06）**紫微斗数引擎**：全书通行安星诀（闰月归本月、庚干「阳武阴同」、身主「子火午铃」）；`buildFromBirth/flowSiHua(流曜四化)/sanFangSiZheng`；星曜五行色表 + 十四主星两面性贴士 + 十二宫白话。**与 iztro 交叉验证 10 组生辰全合**（iztro 仅 devDependency，不进运行时）。`window.Ziwei`。
+- `js/liuyao.js` —（2026-07-06）**六爻引擎**：日期种子确定性三钱成卦（同日稳定）；京房纳甲 + 八宫世应（算法生成非查表）+ 六亲六神；64 卦名/卦辞节选/白话；问财断卦（用神=妻财，月日建生扶动爻记分）→ 偏扬/震荡/偏抑。`window.Liuyao`。
+- `js/qimen.js` —（2026-07-06）**奇门遁甲引擎**：时家转盘拆补法，每日午时盘；节气定阴阳遁三局 + 符头定三元；地盘/值符值使/九星八门八神；问财读生门与戊。`window.Qimen`。
+- `js/btc.js` —（2026-07-06）**BTC 观象台数据层**：创世八字 戊子甲子己酉乙丑（北京时间 2009-01-04 02:15 丑时，师承匿名博士 Chris_Defi）、己土身弱喜火土忌金水木；时代层用三元九运（九紫离火 2024–2043 映射「丙午」代大运）；今日指数/七日走向/周评/免责。`window.BTC`。
+- `js/ui/ziwei.js` — 紫微星盘卡：4×4 宫格（中央命造摘要）、四化章、身宫印、命宫三方四正描边、今日流曜行；未录生辰为 CTA。
+- `js/ui/btc.js` — 观象台卡（**无需生辰即可看**）：BTC 命片/今日指数/七日 sparkline/六爻卦画(本变卦+装卦)/奇门九宫/三法合参/免责。
 - `js/ui/format.js` — `UI.fmt`：tok/gzTok/term/色表（ELC/REL_COLOR）/TODAY 等公共件。
 - `js/ui/popups.js` — `UI.popups`：术语浮层 #pop、悬停浮层 #tip（淡入过渡）。**名词悬停贴士**：所有 `.term` 与 `[data-hint]` 元素划过即现（`hintTipHTML` 两段式），点击落成持久浮层（`hintPopHTML`，兼顾移动端）；挂点在 app.js 的 mouseover/click 委托。
 - `js/ui/almanac.js` — `UI.almanac`：万年历（年月快跳 select + **顺逆点 + 本月大势摘要**）、选定日面板（时间层叠加软化版 + **流年/流月与命局关系速记** + 折叠版通用老黄历 `folkFold`）。
@@ -46,6 +52,7 @@
 - ✅ 万年历微互动：点击墨晕/选中弹性/面板浮入/悬停浮起/调候金点呼吸/方向键巡日（prefers-reduced-motion 全豁免）
 - ⏳ 移动端：≤430px 断点已写（命盘表/关系图横向滚动容器），**待真机验收**
 - ⏳ 谶言/文案语料一期（每神 2 组取象、每态 2 条奏对）——可持续扩池
+- ✅（2026-07-06）**紫微斗数板块** + **观象台·BTC**（八字指数/周走向/六爻/奇门三法合参）+ **化机指数 v2**（五因子：流日契合 32% / 五行能量谱 20% / 层运共振 22% 带细分 / 合冲动静 16% / 紫微流曜 10%，调候 +6 不变；无紫微盘时流曜权重并回流日契合）。dayIndex 增加 opts `{zw, epochGz}`；能量谱 `Daily.energyProfile`（干支藏干加权 × 月令旺衰）。「今天」跨夜自动刷新（app.js tickToday）。
 
 ## 四点五、部署(2026-07-06 起)
 - **线上**:https://roserparker.github.io/bazi-almanac/ (GitHub Pages,仓库 Roserparker/bazi-almanac 公开,main 分支根目录)
