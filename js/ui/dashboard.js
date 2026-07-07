@@ -20,7 +20,7 @@
   }
 
   function renderDashboard(state) {
-    var folkFold = UI.almanac.folkFold, layerRelSummary = UI.almanac.layerRelSummary
+    var folkFold = UI.almanac.folkFold
     var host = document.getElementById('dashboard')
     if (!host) return
     // 仪表盘永远说「今天」；浏览任意日请用万年历（选定日面板 + 详解卡跟随选择）
@@ -47,7 +47,7 @@
 
     var t = D.dailyText(state.chart, state.st, state.yong, d)
     var mini = UI.almanac.timeStackHTML(state.chart, state.yong, d)
-    var ix = D.dayIndex ? D.dayIndex(state.chart, state.st, state.yong, d) : null
+    var ix = D.dayIndex ? D.dayIndex(state.chart, state.st, state.yong, d, { zw: state.zw }) : null
     var ixChip = ix ? '<span class="dash-idxchip" data-hint="化机指数">指数 <b>' + ix.score + '</b> · ' + ix.band + '</span>' : ''
 
     host.innerHTML =

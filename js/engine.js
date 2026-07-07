@@ -24,6 +24,11 @@
     子: '癸', 丑: '己', 寅: '甲', 卯: '乙', 辰: '戊', 巳: '丙',
     午: '丁', 未: '己', 申: '庚', 酉: '辛', 戌: '戊', 亥: '壬'
   }
+  // 地支全藏干（本气·中气·余气，顺序即权重序）——五行能量谱与藏干分析共用
+  var ZHI_CANG = {
+    子: '癸', 丑: '己癸辛', 寅: '甲丙戊', 卯: '乙', 辰: '戊乙癸', 巳: '丙庚戊',
+    午: '丁己', 未: '己丁乙', 申: '庚壬戊', 酉: '辛', 戌: '戊辛丁', 亥: '壬甲'
+  }
   var WUXING_ORDER = ['木', '火', '土', '金', '水']
   var WEEK = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -247,7 +252,8 @@
     GAN_WUXING: GAN_WUXING,
     ZHI_WUXING: ZHI_WUXING,
     GAN_YINYANG: GAN_YINYANG,
-    ZHI_MAIN: ZHI_MAIN
+    ZHI_MAIN: ZHI_MAIN,
+    ZHI_CANG: ZHI_CANG
   }
 
   root.Engine = Engine

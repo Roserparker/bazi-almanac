@@ -327,8 +327,56 @@
 
   var HIT_CN = { tiaohou: '调候', xi: '顺', ping: '平', ji: '留意' }
 
-  // ———— 化机指数（0–100 参考指数，50=中平）————
-  // 合成：流日契合 50% + 时间层共振（大运/流年/流月）28% + 当日合冲动静 22%；调候日 +6。
+  // ———— 五行能量谱 ————
+  // 当日环境之气的定量分布：流日 0.5 / 流月 0.3 / 流年 0.2；每柱 干 0.6 + 支藏干 0.4（本中余 1/0.5/0.3 归一）；
+  // 再乘「月令旺相休囚死」季节系数（旺 1.25 / 相 1.1 / 休 0.9 / 囚 0.75 / 死 0.6），归一成百分比谱。
+  // 投影：喜用占比 − 忌神占比，除以 50 → [-1,1]，是「五行能量」因子。
+  var CANG_W = [1, 0.5, 0.3]
+  var SEASON_F = { 旺: 1.25, 相: 1.1, 休: 0.9, 囚: 0.75, 死: 0.6 }
+  function wangShuaiOf(el, ruler) {
+    if (el === ruler) return '旺'
+    if (E.generates(ruler, el)) return '相'
+    if (E.generates(el, ruler)) return '休'
+    if (E.controls(el, ruler)) return '囚'
+    return '死'
+  }
+  function energyProfile(day, yong) {
+    var e = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 }
+    var layers = [
+      { gan: day.liuriGan, zhi: day.liuriZhi, w: 0.5 },
+      { gan: day.liuyueGan, zhi: day.liuyueZhi, w: 0.3 },
+      { gan: day.liunianGan, zhi: day.liunianZhi, w: 0.2 }
+    ]
+    layers.forEach(function (L) {
+      e[E.GAN_WUXING[L.gan]] += 0.6 * L.w
+      var cang = (E.ZHI_CANG[L.zhi] || '').split('')
+      var tot = 0
+      cang.forEach(function (_, i) { tot += CANG_W[i] || 0.3 })
+      cang.forEach(function (g, i) { e[E.GAN_WUXING[g]] += 0.4 * L.w * (CANG_W[i] || 0.3) / tot })
+    })
+    var ruler = E.ZHI_WUXING[day.liuyueZhi]
+    var seasons = {}
+    var sum = 0
+    ;['木', '火', '土', '金', '水'].forEach(function (w) {
+      seasons[w] = wangShuaiOf(w, ruler)
+      e[w] *= SEASON_F[seasons[w]]
+      sum += e[w]
+    })
+    var pct = {}
+    ;['木', '火', '土', '金', '水'].forEach(function (w) { pct[w] = Math.round(e[w] / sum * 1000) / 10 })
+    var proj = 0
+    if (yong && yong.favorable && (yong.favorable.length || yong.unfavorable.length)) {
+      var fav = 0, unf = 0
+      yong.favorable.forEach(function (w) { fav += pct[w] })
+      yong.unfavorable.forEach(function (w) { unf += pct[w] })
+      proj = Math.max(-1, Math.min(1, (fav - unf) / 50))
+    }
+    return { pct: pct, proj: Math.round(proj * 100) / 100, ruler: ruler, seasons: seasons }
+  }
+
+  // ———— 化机指数 v2（0–100 参考指数，50=中平）————
+  // 五因子合成：流日契合 32% + 五行能量 20% + 层运共振 22% + 合冲动静 16% + 紫微流曜 10%；调候日 +6。
+  // 紫微流曜 = 流日天干四化（禄权科忌）落入命宫三方四正的影响（需紫微盘，缺则该权重并回流日契合）。
   // 命名去恐吓化：昂扬/顺畅/平稳/收敛/蛰养——无「凶」字。
   var IDX_BAND = [
     { min: 72, name: '昂扬', advice: '宜进取——把最重要的事排给今天' },
@@ -348,27 +396,44 @@
     })
     return Math.max(-1, Math.min(1, v))
   }
-  function dayIndex(chart, st, yong, day) {
+  // opts（可选）：{ zw: 紫微盘（Ziwei.buildFromBirth 产物）, epochGz: 时代层干支（如 BTC 用三元九运「丙午」替代个人大运） }
+  function dayIndex(chart, st, yong, day, opts) {
     if (!chart || !yong) return null
     var I = root.Interpret
     var fit = dayHit(yong, E.GAN_WUXING[day.liuriGan], E.ZHI_WUXING[day.liuriZhi], day.liuriGan)
     var isTH = fit.hit === 'tiaohou'
     var fitS = isTH ? Math.max(fit.score, 0.6) : fit.score
     function hs(gan, zhi) { var h = dayHit(yong, E.GAN_WUXING[gan], E.ZHI_WUXING[zhi], gan); return h.hit === 'tiaohou' ? 1 : h.score }
-    var lay = [hs(day.liunianGan, day.liunianZhi), hs(day.liuyueGan, day.liuyueZhi)]
-    var cur = E.currentDaYun(chart, day.year)
-    if (cur && cur.ganZhi) lay.push(hs(cur.ganZhi[0], cur.ganZhi[1]))
+    var detail = { liunian: hs(day.liunianGan, day.liunianZhi), liuyue: hs(day.liuyueGan, day.liuyueZhi), dayun: null }
+    if (opts && opts.epochGz) detail.dayun = hs(opts.epochGz[0], opts.epochGz[1])
+    else {
+      var cur = E.currentDaYun(chart, day.year)
+      if (cur && cur.ganZhi) detail.dayun = hs(cur.ganZhi[0], cur.ganZhi[1])
+    }
+    var lay = [detail.liunian, detail.liuyue]
+    if (detail.dayun !== null) lay.push(detail.dayun)
     var layS = lay.reduce(function (a, b) { return a + b }, 0) / lay.length
     var rels = I && I.mergedDayRelations ? I.mergedDayRelations(chart, day).relations : []
     var motion = relMotion(rels)
-    var raw = 0.5 * fitS + 0.28 * layS + 0.22 * motion
+    var en = energyProfile(day, yong)
+    var zwFlow = null
+    if (opts && opts.zw && root.Ziwei) zwFlow = root.Ziwei.flowSiHua(opts.zw, day.liuriGan)
+    var raw = zwFlow
+      ? 0.32 * fitS + 0.2 * en.proj + 0.22 * layS + 0.16 * motion + 0.1 * zwFlow.score
+      : 0.42 * fitS + 0.2 * en.proj + 0.22 * layS + 0.16 * motion
     var score = Math.round(50 + raw * 46 + (isTH ? 6 : 0))
     score = Math.max(6, Math.min(97, score))
     var band = IDX_BAND[IDX_BAND.length - 1]
     for (var i = 0; i < IDX_BAND.length; i++) { if (score >= IDX_BAND[i].min) { band = IDX_BAND[i]; break } }
+    function r2(x) { return Math.round(x * 100) / 100 }
     return {
       score: score, band: band.name, advice: band.advice,
-      parts: { fit: Math.round(fitS * 100) / 100, layers: Math.round(layS * 100) / 100, motion: Math.round(motion * 100) / 100, tiaohou: isTH },
+      parts: {
+        fit: r2(fitS), energy: en.proj, layers: r2(layS), motion: r2(motion),
+        ziwei: zwFlow ? r2(zwFlow.score) : null, tiaohou: isTH,
+        layerDetail: { dayun: detail.dayun === null ? null : r2(detail.dayun), liunian: r2(detail.liunian), liuyue: r2(detail.liuyue) }
+      },
+      energy: en, zwFlow: zwFlow,
       relCount: rels.length
     }
   }
@@ -437,8 +502,16 @@
       chen: '臣启陛下：霜重路滑，辔宜轻勒——今日缓一步，即是进一步。'
     },
     化机指数: {
-      what: '把一天的能量合成 0–100 的参考指数（50=中平）：流日五行契合占五成，大运/流年/流月共振占近三成，当日与命局的合冲动静占两成余；调候日另有加成。分档：昂扬≥72 / 顺畅 / 平稳 / 收敛 / 蛰养。',
+      what: '把一天的能量合成 0–100 的参考指数（50=中平），五因子加权：流日契合 32%、五行能量谱 20%（流日/流月/流年之气含藏干、乘月令旺衰，对照你的喜忌）、大运流年流月层运共振 22%、当日合冲动静 16%、紫微流曜 10%（流日天干四化落命宫三方四正）；调候日另 +6。分档：昂扬≥72 / 顺畅 / 平稳 / 收敛 / 蛰养。',
       chen: '臣启陛下：指数是参谋之尺，非吉凶之判——高时借势而行，低时敛锋养锐。'
+    },
+    五行能量: {
+      what: '当日环境之气的定量分布：流日占五成、流月三成、流年两成，天干与地支藏干皆计，再按月令旺相休囚死加权，归一成五行百分比谱。你的喜用占比减忌神占比，即是「五行能量」因子。',
+      chen: '臣启陛下：气有厚薄，时有旺衰——观谱知势，借厚而行。'
+    },
+    紫微流曜: {
+      what: '紫微斗数的流日视角：流日天干引动四化（禄权科忌），看化星落入命宫三方四正（命/财帛/官禄/迁移）与否——禄权科入垣为助，忌星入垣宜缓。安星依《紫微斗数全书》通行诀。',
+      chen: '臣启陛下：星垣如朝堂，禄至则贺，忌至则谨——皆一日之客，非终身之判。'
     },
     身强: { what: '得月令、多帮扶，日主之气偏旺——旺则宜泄宜伤（滴天髓），能扛事，喜克泄耗来「用」你。', chen: '臣启陛下：兵强马壮，宜出而任事，忌闭门自雄。' },
     身弱: { what: '失月令、帮扶少，日主之气偏柔——衰则喜帮喜助（滴天髓），宜借力，印比是你的粮草。', chen: '臣启陛下：兵微将寡，宜结盟借势，忌孤军深入。' },
@@ -498,6 +571,11 @@
     }
     if (kind === 'hint') {
       var h = HINT_BASE[key]
+      // 紫微星曜 / 宫位贴士回落（数据在 Ziwei 引擎里，按需取用）
+      if (!h && root.Ziwei) {
+        if (root.Ziwei.STAR_NOTE[key]) h = { what: root.Ziwei.STAR_NOTE[key], chen: '臣曰：星无善恶，成败在驾驭——观其两面，用其所长。' }
+        else if (root.Ziwei.PALACE_NOTE[key]) h = { what: key + '：' + root.Ziwei.PALACE_NOTE[key] + '。十二宫如朝中十二司，各有所掌。', chen: '' }
+      }
       if (!h) return null
       var you = ''
       if (yong && key === '调候日') you = '于你：调候用神为「' + (yong.tiaohouYong || []).join('') + '」——流日天干逢此字即是。'
@@ -544,6 +622,7 @@
 
   var Daily = {
     dailyText: dailyText, dayHit: dayHit, dayScore: dayScore, dayIndex: dayIndex,
+    energyProfile: energyProfile,
     pickQuote: pickQuote, zhenYan: zhenYan, termHint: termHint, HIT_CN: HIT_CN,
     M: M, QUOTES: QUOTES, GAN_NOTE: GAN_NOTE, SS_VERSE: SS_VERSE, ZOU_VERSE: ZOU_VERSE,
     HINT_BASE: HINT_BASE

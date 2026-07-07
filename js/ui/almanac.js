@@ -81,30 +81,65 @@
     '</details>'
   }
 
-  // 化机指数分析块（选定日）
-  function partBar(label, v) {
+  // 化机指数分析块（v2 五因子；idxBlockHTML 供观象台等复用）
+  function partBar(label, v, hintKey) {
     var pct = Math.round(Math.abs(v) * 50)
     var pos = v >= 0
     var fill = '<span class="pb-f ' + (pos ? 'pb-pos' : 'pb-neg') + '" style="width:' + pct + '%;' + (pos ? 'left:50%' : 'right:50%') + '"></span>'
-    return '<div class="idx-part"><span class="ip-k">' + label + '</span>' +
+    return '<div class="idx-part"><span class="ip-k"' + (hintKey ? ' data-hint="' + hintKey + '"' : '') + '>' + label + '</span>' +
       '<span class="pb"><span class="pb-mid"></span>' + fill + '</span>' +
       '<span class="ip-v">' + (v > 0 ? '+' : '') + Math.round(v * 100) + '</span></div>'
   }
-  function idxHTML(state, d) {
-    var D = window.Daily
-    if (!state.chart || !D || !D.dayIndex) return ''
-    var ix = D.dayIndex(state.chart, state.st, state.yong, d)
+  // 五行能量谱：五色横杆 + 喜△忌▽ 标记
+  function energySpectrumHTML(en, yong) {
+    if (!en) return ''
+    var rows = ['木', '火', '土', '金', '水'].map(function (w) {
+      var mark = ''
+      if (yong && yong.favorable && yong.favorable.indexOf(w) >= 0) mark = '<i class="es-mark es-fav">△喜</i>'
+      else if (yong && yong.unfavorable && yong.unfavorable.indexOf(w) >= 0) mark = '<i class="es-mark es-unf">▽忌</i>'
+      return '<div class="es-row"><span class="es-k" style="color:' + F.ELC[w] + '">' + w + '</span>' +
+        '<span class="es-bar"><span class="es-fill" style="width:' + Math.min(100, en.pct[w]) + '%;background:' + F.ELC[w] + '"></span></span>' +
+        '<span class="es-v">' + en.pct[w] + '%</span>' + mark + '<span class="es-season">' + en.seasons[w] + '</span></div>'
+    }).join('')
+    return '<div class="es" data-hint="五行能量"><div class="es-cap">五行能量谱 · 月令' + en.ruler + '当权（旺相休囚死已计入）</div>' + rows + '</div>'
+  }
+  function layerDetailHTML(ld, dayunLabel) {
+    if (!ld) return ''
+    function chip(k, v) {
+      if (v === null || v === undefined) return ''
+      return '<span class="idx-lc">' + k + ' <b class="' + (v > 0.15 ? 'lc-pos' : v < -0.15 ? 'lc-neg' : '') + '">' + (v > 0 ? '+' : '') + Math.round(v * 100) + '</b></span>'
+    }
+    return '<div class="idx-sub">' + chip(dayunLabel || '大运', ld.dayun) + chip('流年', ld.liunian) + chip('流月', ld.liuyue) + '</div>'
+  }
+  function idxBlockHTML(ix, opts, yong) {
     if (!ix) return ''
+    var o = opts || {}
+    var zwSub = ''
+    if (ix.zwFlow && ix.zwFlow.list.length) {
+      zwSub = '<div class="idx-sub">' + ix.zwFlow.list.map(function (x) {
+        return '<span class="idx-lc' + (x.inSFSZ ? ' lc-hit' : '') + '">' + x.hua.slice(1) + '→' + (x.palace || x.zhi) + (x.inSFSZ ? '·入垣' : '') + '</span>'
+      }).join('') + '</div>'
+    }
     return '<div class="idx">' +
       '<div class="idx-head"><span class="idx-cap" data-hint="化机指数">化机指数</span>' +
         '<b class="idx-score">' + ix.score + '</b><span class="idx-band idx-b-' + ix.band + '">' + ix.band + '</span>' +
         (ix.parts.tiaohou ? '<span class="ft ft-th">调候加成</span>' : '') + '</div>' +
       '<div class="idx-bar"><span class="idx-needle" style="left:' + ix.score + '%"></span></div>' +
       partBar('流日契合', ix.parts.fit) +
+      partBar('五行能量', ix.parts.energy, '五行能量') +
       partBar('层运共振', ix.parts.layers) +
+      layerDetailHTML(ix.parts.layerDetail, o.dayunLabel) +
       partBar('合冲动静', ix.parts.motion) +
+      (ix.parts.ziwei === null || ix.parts.ziwei === undefined ? '' : partBar('紫微流曜', ix.parts.ziwei, '紫微流曜') + zwSub) +
+      energySpectrumHTML(ix.energy, yong) +
       '<div class="idx-advice">' + ix.advice + '<span class="idx-note">模型参考 · 非吉凶断言</span></div>' +
     '</div>'
+  }
+  function idxHTML(state, d) {
+    var D = window.Daily
+    if (!state.chart || !D || !D.dayIndex) return ''
+    var ix = D.dayIndex(state.chart, state.st, state.yong, d, { zw: state.zw })
+    return idxBlockHTML(ix, null, state.yong)
   }
 
   function renderDayPanel(state, sel) {
@@ -191,6 +226,7 @@
 
   UI.almanac = {
     renderAlmanac: renderAlmanac, renderDayPanel: renderDayPanel, timeStackHTML: timeStackHTML,
-    favTag: favTag, tlRow: tlRow, folkFold: folkFold, layerRelSummary: layerRelSummary
+    favTag: favTag, tlRow: tlRow, folkFold: folkFold, layerRelSummary: layerRelSummary,
+    idxBlockHTML: idxBlockHTML, energySpectrumHTML: energySpectrumHTML
   }
 })()
