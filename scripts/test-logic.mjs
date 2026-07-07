@@ -267,6 +267,34 @@ console.log('\n=== 紫微斗数引擎 ===')
     console.log('  ✓ iztro 交叉验证 10 组生辰：30 星落宫 / 命身宫 / 五行局 / 命主 / 生年四化 全合')
   }
   console.log('  ✓ 紫微：安星公式 / 纳音 / BTC 盘锁定 / 十四主星唯一 / 流曜界内')
+
+  // 7) 流层推宫（斗君法）与当日建议
+  {
+    // 恒等式：正月生子时 → 斗君 = 流年宫（全书诀自明）
+    const zw1 = Ziwei.buildFromLunar(0, 0, 1, 15, 0)
+    const fl1 = Ziwei.flowLayers(zw1, { year: 2026, month: 7, day: 6 })
+    assert(fl1.douJun === fl1.nian.gong, '正月子时生人斗君应即太岁宫')
+    const zw2 = Ziwei.buildFromBirth(birth)
+    const fl2 = Ziwei.flowLayers(zw2, { year: 2026, month: 7, day: 6 })
+    assert(fl2.yue.gan + fl2.yue.zhi === '甲午', '2026 农历五月流月干支应为甲午(五虎遁): ' + fl2.yue.gan + fl2.yue.zhi)
+    assert(fl2.ri.gan + fl2.ri.zhi === '辛巳', '流日干支应同日柱')
+    // 流日宫逐日顺行
+    let prevG = null, okSeq = true
+    for (let dd = 6; dd <= 10; dd++) {
+      const f = Ziwei.flowLayers(zw2, { year: 2026, month: 7, day: dd })
+      if (prevG !== null && f.ri.gong !== (prevG + 1) % 12) okSeq = false
+      prevG = f.ri.gong
+    }
+    assert(okSeq, '流日宫应逐日顺行一宫')
+    const ad = Ziwei.dayAdvice(zw2, { year: 2026, month: 7, day: 6 })
+    assert(ad.theme.includes('流日入'), '建议主题缺失')
+    assert(ad.starLines.length >= 1 && ad.starLines.every((s) => s.yi && s.ji), '星性宜忌缺失')
+    assert(ad.huaLines.length === 4 && ad.huaLines.every((h) => h.text), '四化建议应四条俱全')
+    assert(ad.chen.startsWith('臣观星垣'), '臣曰收束缺失')
+    const ad2 = Ziwei.dayAdvice(zw2, { year: 2026, month: 7, day: 6 })
+    assert(JSON.stringify(ad) === JSON.stringify(ad2), '当日建议应确定')
+    console.log('  ✓ 流层推宫：斗君恒等式 / 五虎遁流月干 / 流日顺行 / 当日建议四化俱全且确定')
+  }
 }
 
 console.log('\n=== 五行能量谱 + 化机指数 v2 ===')

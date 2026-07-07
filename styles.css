@@ -567,6 +567,33 @@ input[type="date"], input[type="time"] {
 .es-season { font-size: 10px; color: var(--ink-faint); min-width: 12px; }
 
 /* ———— 紫微斗数 · 星盘 ———— */
+.zw-datebar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 2px 0 10px; }
+.zw-date { font-family: var(--serif); font-size: 16px; }
+.zw-date b { font-weight: 600; }
+.zw-date-lunar { font-family: var(--sans); font-size: 12px; color: var(--ink-soft); margin-left: 8px; }
+.zw-date-note { font-size: 11px; color: var(--ink-faint); margin-left: auto; }
+.zw-layerbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 10px; }
+.zw-laybtn {
+  font-family: var(--serif); font-size: 12.5px; letter-spacing: 0.03em; cursor: pointer;
+  color: var(--ink-soft); background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 2px 11px;
+}
+.zw-laybtn:hover { border-color: var(--dai); color: var(--ink); }
+.zw-laybtn.on { color: #7a5c10; border-color: rgba(181, 142, 37, 0.6); background: rgba(181, 142, 37, 0.1); font-weight: 600; }
+.zw-lb-note { font-size: 11px; color: var(--ink-faint); }
+.zw-lay {
+  font-size: 9.5px; font-family: var(--serif); font-weight: 600; line-height: 1.5;
+  padding: 0 4px; border-radius: 3px; border: 1px solid; letter-spacing: 0;
+}
+.zw-lay-n { color: #8a4d20; border-color: rgba(168, 96, 47, 0.5); background: rgba(168, 96, 47, 0.07); }
+.zw-lay-y { color: #14517f; border-color: rgba(29, 104, 166, 0.45); background: rgba(29, 104, 166, 0.08); }
+.zw-lay-r { color: #7a5c10; border-color: rgba(181, 142, 37, 0.65); background: linear-gradient(150deg, rgba(240, 225, 166, 0.7), rgba(216, 189, 98, 0.55)); }
+.zw-advice { margin-top: 14px; padding: 12px 14px 10px; background: var(--paper); border: 1px solid var(--line-soft); border-radius: 8px; }
+.zw-adv-theme { font-family: var(--serif); font-size: 15.5px; margin: 2px 0 8px; line-height: 1.7; }
+.zw-adv-star { font-family: var(--serif); margin-right: 8px; cursor: help; border-bottom: 1px dashed var(--ink-faint); }
+.zw-hua-list { margin-top: 6px; }
+.zw-hua-list li { display: flex; align-items: baseline; gap: 7px; }
+.zw-inyuan { font-size: 10.5px; color: #7a5c10; margin-left: 6px; }
+.zw-chen { margin-top: 10px; font-family: var(--kai); color: #7a5c10; border-left: 2px solid var(--gold); padding-left: 10px; font-size: 14px; line-height: 1.8; }
 .zw-grid {
   display: grid; gap: 5px;
   grid-template-columns: repeat(4, 1fr);
@@ -576,7 +603,10 @@ input[type="date"], input[type="time"] {
   position: relative; min-height: 92px; padding: 7px 8px 6px;
   background: var(--paper); border: 1px solid var(--line-soft); border-radius: 8px;
   display: flex; flex-direction: column; gap: 3px;
+  cursor: pointer; transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
+.zw-cell:hover { transform: translateY(-1.5px); box-shadow: 0 4px 14px rgba(70, 48, 16, 0.09); }
+@media (prefers-reduced-motion: reduce) { .zw-cell { transition: none; } .zw-cell:hover { transform: none; } }
 .zw-cell.zw-sfsz { border-color: rgba(31, 95, 134, 0.4); box-shadow: inset 0 0 0 1px rgba(31, 95, 134, 0.18); }
 .zw-cell.zw-ming { border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(176, 138, 44, 0.45); background: rgba(176, 138, 44, 0.05); }
 .zw-head { display: flex; align-items: baseline; gap: 6px; font-size: 11px; color: var(--ink-faint); }

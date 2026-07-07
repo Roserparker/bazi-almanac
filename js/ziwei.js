@@ -160,7 +160,7 @@
       yearGan: yGan, yearZhi: ZHI[yz],
       sihua: sh.slice(), // [禄,权,科,忌] 星名
       palaces: palaces, starsByZhi: stars,
-      params: { month: m, leap: month < 0, day: day, timeZhi: ZHI[t] }
+      params: { month: m, leap: month < 0, day: day, timeZhi: ZHI[t], timeZhiIdx: t }
     }
   }
 
@@ -210,12 +210,105 @@
     return { list: list, score: Math.max(-1, Math.min(1, score)) }
   }
 
+  /*
+   * ———— 流层推宫（紫微的年月日）————
+   * 流年宫 = 太岁（农历年支）所在宫；
+   * 斗君（流年正月）依全书诀：「太岁宫中便起正，逆回数至生月份；生月宫中起子时，顺至生时镇斗君」；
+   * 流月宫 = 斗君顺行至当月（农历月，闰月归本月）；流日宫 = 流月宫起初一顺行。
+   * 干支：流年取农历岁首（春节切换），流月干由年干五虎遁，流日干支即当日日柱——
+   * 与八字侧的节气链各守其义（立春/节气 vs 岁首/斗君），界面注明。
+   */
+  function flowLayers(zw, date) {
+    var solar = Solar.fromYmdHms(date.year, date.month, date.day, 12, 0, 0)
+    var lu = solar.getLunar()
+    var yg = lu.getYearGanIndex(), yz = lu.getYearZhiIndex()
+    var lm = Math.abs(lu.getMonth()), ld = lu.getDay()
+    var yearGong = yz
+    var douJun = mod12(yearGong - (zw.params.month - 1) + zw.params.timeZhiIdx)
+    var monthGong = mod12(douJun + (lm - 1))
+    var dayGong = mod12(monthGong + (ld - 1))
+    var mGan = GAN[(WUHU[GAN[yg]] + (lm - 1)) % 10]
+    var dayGz = lu.getDayInGanZhi()
+    var pmap = {}
+    zw.palaces.forEach(function (p) { pmap[p.zhiIdx] = p.name })
+    function layer(label, gan, zhi, gong) {
+      return {
+        label: label, gan: gan, zhi: zhi, gong: gong, gongZhi: ZHI[gong],
+        palace: pmap[gong] || '', sihua: flowSiHua(zw, gan)
+      }
+    }
+    return {
+      lunarDesc: lu.toString(), lunarMonth: lm, lunarDay: ld, douJun: douJun,
+      nian: layer('流年', GAN[yg], ZHI[yz], yearGong),
+      yue: layer('流月', mGan, ZHI[(2 + lm - 1) % 12], monthGong),
+      ri: layer('流日', dayGz[0], dayGz[1], dayGong)
+    }
+  }
+
+  // ———— 十四主星 · 当日行动建议（宜/留意，一星一对，去恐吓化）————
+  var STAR_ADVICE = {
+    紫微: { yi: '拿大主意、定方向，做需要「拍板」的事', ji: '留意只听顺耳话——今天多问一句反对意见' },
+    天机: { yi: '筹划、复盘、优化流程，动脑的事最顺手', ji: '留意想太多而不动手——方案过三稿就先行动' },
+    太阳: { yi: '公开表达、照拂他人、把事摆到台面上谈', ji: '留意过度操劳、大包大揽——留一盏灯给自己' },
+    武曲: { yi: '处理钱账与硬任务，执行力今天是长板', ji: '留意语气太硬——事要刚，话可以柔' },
+    天同: { yi: '修整关系、享受生活，把节奏放慢半拍', ji: '留意安逸拖延——挑一件小事今天务必收尾' },
+    廉贞: { yi: '公关斡旋、艺术审美之事，手腕灵活', ji: '留意情理拉扯——先定原则，再讲人情' },
+    天府: { yi: '盘点库存、守成理财，稳字诀最合拍', ji: '留意过于保守——好机会给它十分钟认真看' },
+    太阴: { yi: '静水深流：整理、积蓄、照顾身边人', ji: '留意多愁内耗——心事写下来就放下' },
+    贪狼: { yi: '社交应酬、学新东西，欲望即是动力', ji: '留意贪多嚼不烂——今天只追一只兔子' },
+    巨门: { yi: '深究一个问题、做研究与谈判，口才有光', ji: '留意言语是非——评事不评人' },
+    天相: { yi: '协调各方、履约践诺，做公道的中间人', ji: '留意滥好人——该拒绝的事今天练习说不' },
+    天梁: { yi: '照拂后辈、处理善后、请教长者，荫庇在身', ji: '留意好为人师——先听完，再给建议' },
+    七杀: { yi: '攻坚克难，把最硬的骨头排给今天', ji: '留意冲得太猛——出手前留一条退路' },
+    破军: { yi: '破旧立新：清理、重构、开新局', ji: '留意破而不立——拆掉之前先想好怎么建' }
+  }
+  var HUA_ADVICE = {
+    化禄: function (p) { return '禄入「' + p + '」——此处顺手有缘，宜落实一件实事' },
+    化权: function (p) { return '权入「' + p + '」——此处宜主动出手、当仁不让' },
+    化科: function (p) { return '科入「' + p + '」——此处宜亮相正名，好名声护持' },
+    化忌: function (p) { return '忌入「' + p + '」——此处易多想多绊，留一分耐心（非凶，是功课）' }
+  }
+
+  // 某宫取「用星」：本宫主星；空宫借对宫（注明）
+  function gongStars(zw, gongIdx) {
+    var own = (zw.starsByZhi[gongIdx] || []).filter(function (s) { return s.major })
+    if (own.length) return { stars: own, borrowed: false }
+    var opp = (zw.starsByZhi[mod12(gongIdx + 6)] || []).filter(function (s) { return s.major })
+    return { stars: opp, borrowed: true }
+  }
+
+  /*
+   * 当日建议（主入口）：流日入何宫 × 该宫主星 × 流日四化 → { theme, starLines, huaLines, chen }
+   */
+  function dayAdvice(zw, date) {
+    var fl = flowLayers(zw, date)
+    var ri = fl.ri
+    var gs = gongStars(zw, ri.gong)
+    var theme = '流日入「' + ri.palace + '」—— 今日气聚于' + (PALACE_NOTE[ri.palace] || '此宫') +
+      (gs.borrowed ? '；此宫无主星，借对宫之光行事' : '')
+    var starLines = gs.stars.slice(0, 2).map(function (s) {
+      var a = STAR_ADVICE[s.name] || { yi: '顺其星性而为', ji: '留意过犹不及' }
+      return { star: s.name, hua: s.hua || '', yi: a.yi, ji: a.ji }
+    })
+    var sfsz = sanFangSiZheng(zw.ming)
+    var huaLines = [], luGong = '', jiGong = '', jiInSFSZ = false
+    ri.sihua.list.forEach(function (x) {
+      huaLines.push({ hua: x.hua, star: x.star, palace: x.palace, inSFSZ: x.inSFSZ, text: HUA_ADVICE[x.hua](x.palace || x.zhi) })
+      if (x.hua === '化禄') luGong = x.palace
+      if (x.hua === '化忌') { jiGong = x.palace; jiInSFSZ = x.inSFSZ }
+    })
+    var chen = '臣观星垣：气聚' + ri.palace + '，禄在' + (luGong || '外') + '、忌在' + (jiGong || '外') +
+      (jiInSFSZ ? '——忌临要垣，锋芒收三分，稳字当头。' : '——大道无碍，各安其位，顺星而行。')
+    return { fl: fl, gong: ri.palace, gongZhi: ri.gongZhi, stars: gs, theme: theme, starLines: starLines, huaLines: huaLines, chen: chen }
+  }
+
   var Ziwei = {
     buildFromBirth: buildFromBirth, buildFromLunar: buildFromLunar,
-    flowSiHua: flowSiHua, sanFangSiZheng: sanFangSiZheng, starZhi: starZhi,
+    flowSiHua: flowSiHua, flowLayers: flowLayers, dayAdvice: dayAdvice, gongStars: gongStars,
+    sanFangSiZheng: sanFangSiZheng, starZhi: starZhi,
     ziweiPos: ziweiPos, naYinElement: naYinElement, palaceGan: palaceGan,
     SIHUA: SIHUA, SIHUA_NAMES: SIHUA_NAMES, STAR_EL: STAR_EL, STAR_NOTE: STAR_NOTE,
-    PALACE_NOTE: PALACE_NOTE, PALACE_NAMES: PALACE_NAMES, ZHI: ZHI, GAN: GAN
+    STAR_ADVICE: STAR_ADVICE, PALACE_NOTE: PALACE_NOTE, PALACE_NAMES: PALACE_NAMES, ZHI: ZHI, GAN: GAN
   }
   root.Ziwei = Ziwei
   if (typeof module !== 'undefined' && module.exports) module.exports = Ziwei

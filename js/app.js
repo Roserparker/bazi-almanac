@@ -127,6 +127,14 @@
       document.getElementById('intake').scrollIntoView({ behavior: 'smooth' })
     } else if (action === 'closePop') {
       P.closeTerm()
+    } else if (action === 'zwPrev' || action === 'zwNext') {
+      // 紫微日期条翻日：与万年历共用选定日
+      var keep = document.getElementById('ziwei')
+      var top = keep ? keep.getBoundingClientRect().top : null
+      moveSel(action === 'zwPrev' ? -1 : 1)
+      if (top !== null) { var el2 = document.getElementById('ziwei'); if (el2) window.scrollBy(0, el2.getBoundingClientRect().top - top) }
+    } else if (action === 'zwLayer') {
+      if (UI.ziwei) { UI.ziwei.setLayer(ds.layer); UI.ziwei.renderZiwei(state) }
     }
   }
 
@@ -137,6 +145,11 @@
     if (t) { P.openTerm(t.dataset.kind, t.dataset.key, e.clientX, e.clientY); e.stopPropagation(); return }
     var hd = e.target.closest('[data-hint], [data-gz]')
     if (hd) { var x = hintOf(hd); if (x) P.showPop(P.hintPopHTML(x.h, x.title), e.clientX, e.clientY); P.hideTip(); e.stopPropagation(); return }
+    var zc = e.target.closest('.zw-cell')
+    if (zc && zc.dataset.zhi !== undefined && UI.ziwei) {
+      P.showPop(UI.ziwei.palacePopHTML(Number(zc.dataset.zhi)), e.clientX, e.clientY)
+      P.hideTip(); e.stopPropagation(); return
+    }
     var a = e.target.closest('[data-action]')
     if (a) { e.preventDefault(); handleAction(a.dataset.action, a.dataset); return }
     if (!e.target.closest('#pop')) P.closeTerm()
