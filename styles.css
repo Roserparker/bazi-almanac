@@ -674,6 +674,11 @@ input[type="date"], input[type="time"] {
 .btc-rels li .btc-rt { font-family: var(--serif); margin-right: 8px; color: var(--ink); }
 .btc-norel { font-size: 13px; color: var(--ink-faint); margin: 6px 0; }
 .btc-wkcmt { font-size: 13.5px; color: var(--dai); margin-top: 6px; }
+.btc-note { margin: 12px 0 4px; padding: 11px 15px 9px; border-left: 3px solid var(--gold); background: rgba(176, 138, 44, 0.06); border-radius: 0 6px 6px 0; }
+.btc-note-cap { font-size: 12px; color: #7a5c10; letter-spacing: 0.06em; margin-bottom: 5px; font-family: var(--serif); }
+.btc-note-old { color: var(--ink-faint); font-family: var(--sans); letter-spacing: 0; }
+.btc-note-text { font-family: var(--kai); font-size: 15px; line-height: 1.95; color: var(--ink); }
+.btc-note-src { font-size: 11px; color: var(--ink-faint); margin-top: 6px; }
 .btc-heji { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 16px 0 4px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
 .btc-heji-note { font-size: 12px; color: var(--ink-faint); }
 .btc-disc { margin-top: 14px; }

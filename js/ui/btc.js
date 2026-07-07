@@ -13,6 +13,37 @@
   var BAND_COLOR = { 昂扬: '#8a6d14', 顺畅: '#0f5c36', 平稳: '#6d6353', 收敛: '#8a4d20', 蛰养: '#1f5f86' }
   var TEND_CLS = { 偏扬: 'up', 震荡: 'mid', 偏抑: 'dn' }
 
+  // ———— 观象手记（云端 routine 每日写入 data/observatory-notes.json；缺席则静默不显）————
+  var NOTE = { forDate: null, note: null }
+  function paintNote() {
+    var el = document.getElementById('btc-note')
+    if (!el) return
+    var n = NOTE.note
+    if (!n) { el.innerHTML = ''; return }
+    var today = F.ymd(F.TODAY)
+    el.innerHTML =
+      '<div class="btc-note">' +
+        '<div class="btc-note-cap">观象手记 · ' + n.date + (n.date === today ? '' : ' <span class="btc-note-old">（旧记 · 今日手记未至）</span>') + '</div>' +
+        '<div class="btc-note-text">' + F.esc(n.text) + '</div>' +
+        '<div class="btc-note-src">云端观星官每日一记 · 依站内模型而作，不引外闻 · 缺勤则只看盘面</div>' +
+      '</div>'
+  }
+  function fetchNote() {
+    var today = F.ymd(F.TODAY)
+    if (NOTE.forDate === today) { paintNote(); return }
+    if (typeof fetch !== 'function') return // file:// 双击离线场景：静默降级
+    try {
+      fetch('data/observatory-notes.json?v=' + today.replace(/-/g, ''))
+        .then(function (r) { return r.ok ? r.json() : null })
+        .then(function (j) {
+          NOTE.forDate = today
+          NOTE.note = j && j.notes && j.notes.length ? j.notes[0] : null
+          paintNote()
+        })
+        .catch(function () { NOTE.forDate = today; NOTE.note = null; paintNote() })
+    } catch (e) { /* 静默 */ }
+  }
+
   // ———— 本周走向 sparkline ————
   function weekSVG(series) {
     var W = 560, H = 130, x0 = 34, dx = (W - x0 - 18) / 6
@@ -180,8 +211,9 @@
 
     host.innerHTML =
       '<h2 class="sect-title">观象台 · BTC <span class="sect-sub">玄学金融 · 文化推演</span></h2>' +
-      mingCard + todayBlock + weekBlock + lyBlock + qmBlock + confl +
+      mingCard + '<div id="btc-note"></div>' + todayBlock + weekBlock + lyBlock + qmBlock + confl +
       '<div class="disclaimer btc-disc">' + B.COPY.disclaimer + '</div>'
+    fetchNote()
   }
 
   UI.btc = { renderBTC: renderBTC, weekSVG: weekSVG }
