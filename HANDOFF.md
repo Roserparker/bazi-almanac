@@ -47,6 +47,12 @@
 - ⏳ 移动端：≤430px 断点已写（命盘表/关系图横向滚动容器），**待真机验收**
 - ⏳ 谶言/文案语料一期（每神 2 组取象、每态 2 条奏对）——可持续扩池
 
+## 四点五、部署(2026-07-06 起)
+- **线上**:https://roserparker.github.io/bazi-almanac/ (GitHub Pages,仓库 Roserparker/bazi-almanac 公开,main 分支根目录)
+- **发布方式**:`git push` 即自动重新部署(约 1 分钟生效);无构建步骤
+- **本地离线**:双击 index.html 即可(零构建的红利)
+- 注意:github.io 大陆访问不稳定——将来面向大陆用户仍按 M9 计划迁国内 OSS/CDN;生辰数据按域名隔离,换域名需重录一次
+
 ## 五、怎么跑 / 怎么验证
 - 本地预览：`python3 -m http.server 5500 --directory "<项目路径>"`，开 `http://localhost:5500/`。也可直接双击 index.html。
 - 验证逻辑（必做）：`node scripts/test-logic.mjs`，末行 LOGIC OK 才算过。
