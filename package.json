@@ -10,5 +10,8 @@
   },
   "dependencies": {
     "lunar-javascript": "^1.6.0"
+  },
+  "devDependencies": {
+    "iztro": "^2.5.8"
   }
 }
