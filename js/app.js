@@ -12,7 +12,7 @@
 
   var state = {
     birth: load(),
-    chart: null, st: null, yong: null,
+    chart: null, st: null, yong: null, zw: null,
     sel: F.assign({}, F.TODAY),
     cal: { year: F.TODAY.year, month: F.TODAY.month }
   }
@@ -22,7 +22,7 @@
   function wipe() { try { localStorage.removeItem(STORAGE_KEY) } catch (e) {} }
 
   function refreshChart() {
-    state.chart = state.st = state.yong = null
+    state.chart = state.st = state.yong = state.zw = null
     if (!state.birth) return
     try {
       state.chart = E.buildChart(state.birth)
@@ -33,13 +33,32 @@
       state.chart = state.st = state.yong = null
       state.birth = null; wipe()
     }
+    // 紫微盘（辅）——排盘失败不拖累八字主线
+    try { if (state.birth && window.Ziwei) state.zw = window.Ziwei.buildFromBirth(state.birth) } catch (e2) { state.zw = null }
   }
 
   function renderAll() {
     UI.dashboard.renderDashboard(state)
     UI.almanac.renderAlmanac(state)
     UI.personal.renderPersonal(state)
+    if (UI.ziwei) UI.ziwei.renderZiwei(state)
+    if (UI.btc) UI.btc.renderBTC(state)
   }
+
+  // 「今天」跨夜刷新：页面开过午夜或次日回到前台时，F.TODAY 与各卡片跟着换日
+  function tickToday() {
+    var now = new Date()
+    if (now.getFullYear() === F.TODAY.year && now.getMonth() + 1 === F.TODAY.month && now.getDate() === F.TODAY.day) return
+    var wasToday = F.same(state.sel, F.TODAY)
+    F.assign(F.TODAY, { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() })
+    if (wasToday) {
+      state.sel = F.assign({}, F.TODAY)
+      state.cal = { year: F.TODAY.year, month: F.TODAY.month }
+    }
+    renderAll()
+  }
+  setInterval(tickToday, 60000)
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) tickToday() })
 
   // ======== 录入区 ========
   function renderIntake() {
