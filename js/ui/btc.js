@@ -21,9 +21,11 @@
     var n = NOTE.note
     if (!n) { el.innerHTML = ''; return }
     var today = F.ymd(F.TODAY)
+    // 手记日期早于今天=旧记；晚于今天（时区先行）则只标日期不另注
+    var tag = n.date < today ? ' <span class="btc-note-old">（今日手记未至 · 示最近一记）</span>' : ''
     el.innerHTML =
       '<div class="btc-note">' +
-        '<div class="btc-note-cap">观象手记 · ' + n.date + (n.date === today ? '' : ' <span class="btc-note-old">（旧记 · 今日手记未至）</span>') + '</div>' +
+        '<div class="btc-note-cap">观象手记 · ' + n.date + tag + '</div>' +
         '<div class="btc-note-text">' + F.esc(n.text) + '</div>' +
         '<div class="btc-note-src">云端观星官每日一记 · 依站内模型而作，不引外闻 · 缺勤则只看盘面</div>' +
       '</div>'
