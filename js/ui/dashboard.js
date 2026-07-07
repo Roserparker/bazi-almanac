@@ -47,8 +47,10 @@
 
     var t = D.dailyText(state.chart, state.st, state.yong, d)
     var mini = UI.almanac.timeStackHTML(state.chart, state.yong, d)
-    var ix = D.dayIndex ? D.dayIndex(state.chart, state.st, state.yong, d, { zw: state.zw }) : null
+    var dd = D.dayDims ? D.dayDims(state.chart, state.st, state.yong, d, { zw: state.zw }) : null
+    var ix = dd ? dd.ix : null
     var ixChip = ix ? '<span class="dash-idxchip" data-hint="化机指数">指数 <b>' + ix.score + '</b> · ' + ix.band + '</span>' : ''
+    var dimsRow = dd && UI.almanac.dimsRowHTML ? UI.almanac.dimsRowHTML(dd, true) : ''
 
     host.innerHTML =
       '<h2 class="sect-title">今日 · 化机</h2>' +
@@ -56,6 +58,7 @@
       '<div class="dash-theme">' + t.theme + '</div>' +
       '<div class="dash-hit">' + gauge(t.hit) + ixChip +
         '<span class="dash-ss">流日 ' + F.tok(d.liuriGan, E.GAN_WUXING[d.liuriGan]) + ' 为你的 ' + F.term(t.ss, 'shishen', t.ss) + '</span></div>' +
+      dimsRow +
       '<div class="dash-hittext">' + t.hitText + '</div>' +
       '<div class="dash-yiji">' +
         '<div class="dy-row good"><span class="dy-k">宜</span>' + t.yi + '</div>' +

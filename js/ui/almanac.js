@@ -111,35 +111,68 @@
     }
     return '<div class="idx-sub">' + chip(dayunLabel || '大运', ld.dayun) + chip('流年', ld.liunian) + chip('流月', ld.liuyue) + '</div>'
   }
-  function idxBlockHTML(ix, opts, yong) {
-    if (!ix) return ''
-    var o = opts || {}
+  // 分维指数一行（财运/事业/情感/出行/学养）——仪表盘与选定日面板共用
+  function dimsRowHTML(dd, small) {
+    if (!dd) return ''
+    var tiles = dd.dimOrder.map(function (def) {
+      var v = dd.dims[def.key]
+      return '<span class="idx-dim dl-' + v.label + '" data-hint="化机分维"><span class="id-k">' + def.name + '</span><b>' + v.score + '</b><i>' + v.label + '</i></span>'
+    }).join('')
+    return '<div class="idx-dims' + (small ? ' idx-dims-sm' : '') + '">' + tiles + '</div>'
+  }
+  // 今日事项两行（宜 / 缓）：个人分维 × 当日黄历白名单
+  function eventsHTML(dd) {
+    if (!dd || (!dd.yi.length && !dd.huan.length)) return ''
+    function chips(arr) { return arr.map(function (t) { return '<span class="chip">' + t + '</span>' }).join('') }
+    return '<div class="idx-ev">' +
+      (dd.yi.length ? '<div class="ev-row"><span class="dy-k ev-yi">宜</span>' + chips(dd.yi) + '</div>' : '') +
+      (dd.huan.length ? '<div class="ev-row"><span class="dy-k ev-huan">缓</span>' + chips(dd.huan) + '<span class="ev-note">并入当日黄历 · 以你的盘为主轴</span></div>' : '') +
+    '</div>'
+  }
+  // 合成明细（五因子/层运/四化/能量谱）——紧凑模式下折叠
+  function idxDetailHTML(ix, o, yong) {
     var zwSub = ''
     if (ix.zwFlow && ix.zwFlow.list.length) {
       zwSub = '<div class="idx-sub">' + ix.zwFlow.list.map(function (x) {
         return '<span class="idx-lc' + (x.inSFSZ ? ' lc-hit' : '') + '">' + x.hua.slice(1) + '→' + (x.palace || x.zhi) + (x.inSFSZ ? '·入垣' : '') + '</span>'
       }).join('') + '</div>'
     }
-    return '<div class="idx">' +
-      '<div class="idx-head"><span class="idx-cap" data-hint="化机指数">化机指数</span>' +
-        '<b class="idx-score">' + ix.score + '</b><span class="idx-band idx-b-' + ix.band + '">' + ix.band + '</span>' +
-        (ix.parts.tiaohou ? '<span class="ft ft-th">调候加成</span>' : '') + '</div>' +
-      '<div class="idx-bar"><span class="idx-needle" style="left:' + ix.score + '%"></span></div>' +
-      partBar('流日契合', ix.parts.fit) +
+    return partBar('流日契合', ix.parts.fit) +
       partBar('五行能量', ix.parts.energy, '五行能量') +
       partBar('层运共振', ix.parts.layers) +
       layerDetailHTML(ix.parts.layerDetail, o.dayunLabel) +
       partBar('合冲动静', ix.parts.motion) +
       (ix.parts.ziwei === null || ix.parts.ziwei === undefined ? '' : partBar('紫微流曜', ix.parts.ziwei, '紫微流曜') + zwSub) +
-      energySpectrumHTML(ix.energy, yong) +
-      '<div class="idx-advice">' + ix.advice + '<span class="idx-note">模型参考 · 非吉凶断言</span></div>' +
+      energySpectrumHTML(ix.energy, yong)
+  }
+  // opts: { compact: true(默认·折叠明细) | false(观象台·全展开), dayunLabel, dd(分维结果) }
+  function idxBlockHTML(ix, opts, yong) {
+    if (!ix) return ''
+    var o = opts || {}
+    var compact = o.compact !== false
+    var head =
+      '<div class="idx-head"><span class="idx-cap" data-hint="化机指数">化机指数</span>' +
+        '<b class="idx-score">' + ix.score + '</b><span class="idx-band idx-b-' + ix.band + '">' + ix.band + '</span>' +
+        (ix.parts.tiaohou ? '<span class="ft ft-th">调候</span>' : '') +
+        '<span class="idx-adv-inline">' + ix.advice + '</span></div>' +
+      '<div class="idx-bar"><span class="idx-needle" style="left:' + ix.score + '%"></span></div>'
+    var detail = idxDetailHTML(ix, o, yong)
+    if (!compact) {
+      return '<div class="idx">' + head + detail +
+        '<div class="idx-advice"><span class="idx-note">模型参考 · 非吉凶断言</span></div></div>'
+    }
+    return '<div class="idx idx-compact">' + head +
+      dimsRowHTML(o.dd) + eventsHTML(o.dd) +
+      '<details class="idx-more"><summary>合成明细 · 五因子与能量谱</summary>' + detail + '</details>' +
+      '<div class="idx-advice"><span class="idx-note">模型参考 · 非吉凶断言</span></div>' +
     '</div>'
   }
   function idxHTML(state, d) {
     var D = window.Daily
-    if (!state.chart || !D || !D.dayIndex) return ''
-    var ix = D.dayIndex(state.chart, state.st, state.yong, d, { zw: state.zw })
-    return idxBlockHTML(ix, null, state.yong)
+    if (!state.chart || !D || !D.dayDims) return ''
+    var dd = D.dayDims(state.chart, state.st, state.yong, d, { zw: state.zw })
+    if (!dd) return ''
+    return idxBlockHTML(dd.ix, { dd: dd }, state.yong)
   }
 
   function renderDayPanel(state, sel) {
@@ -235,6 +268,6 @@
   UI.almanac = {
     renderAlmanac: renderAlmanac, renderDayPanel: renderDayPanel, timeStackHTML: timeStackHTML,
     favTag: favTag, tlRow: tlRow, folkFold: folkFold, layerRelSummary: layerRelSummary,
-    idxBlockHTML: idxBlockHTML, energySpectrumHTML: energySpectrumHTML
+    idxBlockHTML: idxBlockHTML, energySpectrumHTML: energySpectrumHTML, dimsRowHTML: dimsRowHTML
   }
 })()

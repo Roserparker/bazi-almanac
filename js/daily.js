@@ -437,6 +437,116 @@
       relCount: rels.length
     }
   }
+  // ———— 化机分维：财运 / 事业 / 情感 / 出行·迁移 / 学养 + 今日事项（并入黄历宜忌）————
+  // 分维 = 总指数为底（55%）向中回拉（45%），再按「该维五行能量 + 流日十神 + 宫位/神煞触发 + 黄历事项」微调。
+  // 黄历宜忌（通用千人一面）在此只作事项层的「顺水推舟/逆水缓行」小权重，个人盘仍是主轴。
+  var YIMA = [2, 11, 8, 5] // 申子辰→寅 巳酉丑→亥 寅午戌→申 亥卯未→巳（以日支起，取「自身行动」之义）
+  var ZHI_SEQ = '子丑寅卯辰巳午未申酉戌亥'
+  // 黄历事项 → 白话（白名单；未列入者不展示，保持素静）
+  var FOLK_CN = {
+    交易: '签约交易', 立券: '订立合同', 纳财: '进财收款', 开市: '开张开市', 开仓: '出货开仓',
+    出行: '出行远行', 移徙: '搬家迁居', 入宅: '入住新居', 安床: '安床布置',
+    嫁娶: '婚嫁喜事', 订盟: '定亲订约', 纳采: '提亲说媒', 会亲友: '会见亲友',
+    祭祀: '祭祖祈福', 祈福: '祈福静心', 入学: '入学开课', 习艺: '拜师习艺',
+    动土: '装修动土', 盖屋: '修缮房屋', 求医: '就医调理', 栽种: '栽种莳花'
+  }
+  var DIM_DEF = [
+    { key: 'cai', name: '财运', folk: ['交易', '立券', '纳财', '开市', '开仓'] },
+    { key: 'shiye', name: '事业', folk: ['开市', '立券', '动土', '盖屋'] },
+    { key: 'qinggan', name: '情感', folk: ['嫁娶', '订盟', '纳采', '会亲友', '安床'] },
+    { key: 'chuxing', name: '出行', folk: ['出行', '移徙', '入宅'] },
+    { key: 'xueyang', name: '学养', folk: ['入学', '习艺', '祭祀', '祈福'] }
+  ]
+  function elOfGroup(dmEl, want) {
+    var els = ['木', '火', '土', '金', '水']
+    for (var i = 0; i < 5; i++) {
+      var e = els[i]
+      if (want === '财' && E.controls(dmEl, e)) return e
+      if (want === '官杀' && E.controls(e, dmEl)) return e
+      if (want === '印' && E.generates(e, dmEl)) return e
+      if (want === '食伤' && E.generates(dmEl, e)) return e
+    }
+    return dmEl
+  }
+  function dimLabel(v) { return v >= 62 ? '顺' : v >= 45 ? '平' : '缓' }
+  function dayDims(chart, st, yong, day, opts) {
+    var ix = dayIndex(chart, st, yong, day, opts)
+    if (!ix) return null
+    var I = root.Interpret
+    var dm = chart.dayMaster.wuxing
+    var pct = ix.energy.pct
+    var ssGroup = E.SHISHEN_GROUP[E.shiShen(chart.dayMaster.gan, day.liuriGan)]
+    var rels = I && I.mergedDayRelations ? I.mergedDayRelations(chart, day).relations : []
+    // 夫妻宫（日支）触动 与 全盘动象
+    var spouse = 0, anyChong = false
+    rels.forEach(function (r) {
+      if (r.type === '冲') anyChong = true
+      if (r.members.indexOf('day') < 0) return
+      if (r.kind === 'gan') { spouse += r.type === '五合' ? 6 : 0; return }
+      if (r.type === '合' || r.type === '三合' || r.type === '三会') spouse += 8
+      else if (r.type === '冲') spouse -= 8
+      else if (r.type === '刑' || r.type === '害') spouse -= 6
+      else if (r.type === '破') spouse -= 3
+    })
+    // 驿马（日支三合）· 红鸾天喜（紫微盘）
+    var dayZhiIdx = ZHI_SEQ.indexOf(chart.pillars.day.zhi)
+    var liuriZhiIdx = ZHI_SEQ.indexOf(day.liuriZhi)
+    var yima = YIMA[dayZhiIdx % 4] === liuriZhiIdx
+    var luanXi = false
+    if (opts && opts.zw && root.Ziwei) {
+      var lz = root.Ziwei.starZhi(opts.zw, '红鸾'), xz = root.Ziwei.starZhi(opts.zw, '天喜')
+      luanXi = liuriZhiIdx === lz || liuriZhiIdx === xz
+    }
+    var yiSet = day.yi || [], jiSet = day.ji || []
+    function folkAdj(keys) {
+      var v = 0
+      keys.forEach(function (k) { if (yiSet.indexOf(k) >= 0) v += 3; if (jiSet.indexOf(k) >= 0) v -= 3 })
+      return Math.max(-6, Math.min(6, v))
+    }
+    function mk(adj, folkKeys) {
+      var v = Math.round(ix.score * 0.55 + 50 * 0.45 + adj + folkAdj(folkKeys))
+      v = Math.max(5, Math.min(98, v))
+      return { score: v, label: dimLabel(v) }
+    }
+    var eCai = elOfGroup(dm, '财'), eGuan = elOfGroup(dm, '官杀'), eYin = elOfGroup(dm, '印')
+    var dims = {
+      cai: mk((pct[eCai] - 20) * 0.4 + (ssGroup === '财' ? 9 : ssGroup === '比劫' ? -7 : 0), DIM_DEF[0].folk),
+      shiye: mk((pct[eGuan] - 20) * 0.3 + (pct[eYin] - 20) * 0.15 + (ssGroup === '官杀' ? 8 : ssGroup === '印' ? 4 : 0), DIM_DEF[1].folk),
+      qinggan: mk(spouse + (luanXi ? 8 : 0) + (ssGroup === '食伤' ? 3 : 0), DIM_DEF[2].folk),
+      chuxing: mk((yima ? 10 : 0) + (anyChong ? 4 : 0) + (ssGroup === '比劫' ? 3 : 0), DIM_DEF[3].folk),
+      xueyang: mk((pct[eYin] - 20) * 0.4 + (ssGroup === '印' ? 8 : ssGroup === '食伤' ? 4 : 0), DIM_DEF[4].folk)
+    }
+    // 今日事项：黄历白名单 × 分维顺逆 → 宜（该维不缓）/ 缓（该维偏缓或黄历所忌）
+    var yi = [], huan = [], seen = {}
+    function dimOfFolk(k) {
+      for (var i = 0; i < DIM_DEF.length; i++) { if (DIM_DEF[i].folk.indexOf(k) >= 0) return dims[DIM_DEF[i].key] }
+      return null
+    }
+    yiSet.forEach(function (k) {
+      var cn = FOLK_CN[k]
+      if (!cn || seen[cn]) return
+      var dv = dimOfFolk(k)
+      if (dv && dv.score < 45) return // 黄历虽宜、个人偏缓 → 不入宜
+      seen[cn] = 1; yi.push(cn)
+    })
+    jiSet.forEach(function (k) {
+      var cn = FOLK_CN[k]
+      if (!cn || seen[cn]) return
+      seen[cn] = 1; huan.push(cn)
+    })
+    // 个人维度补充：最旺维给一条顺水事，最缓维给一条缓行事
+    var DIM_YI = { cai: '理财对账', shiye: '推进正事', qinggan: '经营关系', chuxing: '出行走动', xueyang: '读书充电' }
+    var DIM_HUAN = { cai: '大额支出', shiye: '硬碰交涉', qinggan: '翻旧账', chuxing: '远途搬迁', xueyang: '囤而不读' }
+    var best = null, worst = null
+    DIM_DEF.forEach(function (d) {
+      if (!best || dims[d.key].score > dims[best].score) best = d.key
+      if (!worst || dims[d.key].score < dims[worst].score) worst = d.key
+    })
+    if (dims[best].score >= 55 && yi.indexOf(DIM_YI[best]) < 0) yi.unshift(DIM_YI[best])
+    if (dims[worst].score < 45 && huan.indexOf(DIM_HUAN[worst]) < 0) huan.unshift(DIM_HUAN[worst])
+    return { ix: ix, dims: dims, dimOrder: DIM_DEF, yi: yi.slice(0, 3), huan: huan.slice(0, 3) }
+  }
+
   // 顺逆一句话（含调候/中和特判）
   function hitLine(hit, ganEl, yong) {
     if (hit === 'tiaohou') return '今日之气（' + ganEl + '）正是你的调候用神——最对症，宜借力（穷通宝鉴：调候为急）。'
@@ -508,6 +618,10 @@
     五行能量: {
       what: '当日环境之气的定量分布：流日占五成、流月三成、流年两成，天干与地支藏干皆计，再按月令旺相休囚死加权，归一成五行百分比谱。你的喜用占比减忌神占比，即是「五行能量」因子。',
       chen: '臣启陛下：气有厚薄，时有旺衰——观谱知势，借厚而行。'
+    },
+    化机分维: {
+      what: '把总指数按事项拆成五维：财运（财星五行能量+流日十神）、事业（官杀与印）、情感（夫妻宫合冲+红鸾天喜）、出行（驿马与动象，含搬家迁居）、学养（印星能量）。各维以总指数为底、向中回拉再微调，并轻度并入当日黄历宜忌——个人盘为主轴，黄历只作顺水逆水的小权重。分档：顺≥62 / 平 / 缓<45。',
+      chen: '臣启陛下：一日之气，各司不同——问事择其旺处行，缓处不必强求。'
     },
     紫微流曜: {
       what: '紫微斗数的流日视角：流日天干引动四化（禄权科忌），看化星落入命宫三方四正（命/财帛/官禄/迁移）与否——禄权科入垣为助，忌星入垣宜缓。安星依《紫微斗数全书》通行诀。',
@@ -622,7 +736,7 @@
 
   var Daily = {
     dailyText: dailyText, dayHit: dayHit, dayScore: dayScore, dayIndex: dayIndex,
-    energyProfile: energyProfile,
+    energyProfile: energyProfile, dayDims: dayDims,
     pickQuote: pickQuote, zhenYan: zhenYan, termHint: termHint, HIT_CN: HIT_CN,
     M: M, QUOTES: QUOTES, GAN_NOTE: GAN_NOTE, SS_VERSE: SS_VERSE, ZOU_VERSE: ZOU_VERSE,
     HINT_BASE: HINT_BASE

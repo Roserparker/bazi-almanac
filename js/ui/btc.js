@@ -182,7 +182,7 @@
     var todayBlock =
       '<div class="obs-block">' +
         '<div class="obs-cap">今日走向 · ' + d.solarYmd + ' ' + d.weekday + ' <span class="obs-sub">流日 ' + F.gzTok(d.liuri) + ' × BTC 创世盘</span></div>' +
-        (UI.almanac.idxBlockHTML ? UI.almanac.idxBlockHTML(ix, { dayunLabel: '九运' }) : '') +
+        (UI.almanac.idxBlockHTML ? UI.almanac.idxBlockHTML(ix, { dayunLabel: '九运', compact: false }) : '') +
         relLine +
       '</div>'
 

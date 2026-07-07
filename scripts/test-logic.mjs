@@ -323,6 +323,34 @@ console.log('\n=== 五行能量谱 + 化机指数 v2 ===')
   assert(Daily.termHint('hint', '五行能量', {}) && Daily.termHint('hint', '紫微流曜', {}), '新因子贴士缺失')
   assert(Daily.termHint('hint', '紫微', {}) && Daily.termHint('hint', '命宫', {}), '紫微星曜/宫位贴士回落失效')
   console.log('  ✓ 能量谱归一/投影方向/指数 v2 部件/紫微因子/epochGz/贴士')
+
+  // 化机分维 + 今日事项（黄历并入）
+  {
+    const zw2 = Ziwei.buildFromBirth(birth)
+    const dd = Daily.dayDims(chart, st, yong, d0, { zw: zw2 })
+    assert(dd && dd.ix && dd.ix.score === Daily.dayIndex(chart, st, yong, d0, { zw: zw2 }).score, '分维应内嵌同一总指数')
+    const keys = ['cai', 'shiye', 'qinggan', 'chuxing', 'xueyang']
+    keys.forEach((k) => {
+      const v = dd.dims[k]
+      assert(v && v.score >= 5 && v.score <= 98 && ['顺', '平', '缓'].includes(v.label), '分维越界: ' + k)
+    })
+    assert(dd.dimOrder.length === 5, '分维应五维')
+    assert(dd.yi.length <= 3 && dd.huan.length <= 3, '事项应各≤3')
+    dd.yi.concat(dd.huan).forEach((t) => assert(typeof t === 'string' && t.length >= 2 && t.length <= 6, '事项文案异常: ' + t))
+    const dd2 = Daily.dayDims(chart, st, yong, d0, { zw: zw2 })
+    assert(JSON.stringify(dd.dims) === JSON.stringify(dd2.dims) && JSON.stringify(dd.yi) === JSON.stringify(dd2.yi), '分维应同日稳定')
+    // 30 天内分维应有分化（非恒等）
+    let varied = false
+    for (let i = 0; i < 30 && !varied; i++) {
+      const dt = new Date(2026, 6, 7 + i)
+      const dx = Daily.dayDims(chart, st, yong, Engine.buildDay({ year: dt.getFullYear(), month: dt.getMonth() + 1, day: dt.getDate() }), { zw: zw2 })
+      const vals = keys.map((k) => dx.dims[k].score)
+      if (Math.max(...vals) - Math.min(...vals) >= 10) varied = true
+    }
+    assert(varied, '30 天内分维应出现 ≥10 分的分化')
+    assert(Daily.termHint('hint', '化机分维', {}), '化机分维贴士缺失')
+    console.log('  ✓ 化机分维：五维界内/事项≤3/同日稳定/30天有分化/贴士')
+  }
 }
 
 console.log('\n=== BTC 观象台 ===')
