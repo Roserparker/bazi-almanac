@@ -320,6 +320,17 @@ console.log('\n=== 紫微斗数引擎 ===')
     const ad3 = Ziwei.dayAdvice(zw2, { year: 2026, month: 7, day: 6 })
     assert(ad3.yunxian && ad3.yunxian.includes('大限') && ad3.yunxian.includes('流年'), '建议应含运限视角')
     console.log('  ✓ flowLayers.dx / dayAdvice.yunxian')
+
+    // 宫位深批：十二宫皆有四段、确定性、趋势句成立
+    for (let z = 0; z < 12; z++) {
+      const ga = Ziwei.gongAnalysis(zw2, fl3, z)
+      assert(ga && ga.sanfang.length > 20 && ga.daxian.length > 10 && ga.liunian.length > 10 && ga.trend.length > 10, '深批缺段: 宫' + z)
+      assert(ga.trend.includes('趋势') || ga.trend.includes('宜') || ga.trend.includes('守'), '趋势句异常: 宫' + z)
+    }
+    const ga1 = Ziwei.gongAnalysis(zw2, fl3, zw2.ming)
+    const ga2 = Ziwei.gongAnalysis(zw2, fl3, zw2.ming)
+    assert(JSON.stringify(ga1) === JSON.stringify(ga2), '深批应确定')
+    console.log('  ✓ 宫位深批：十二宫四段齐全 / 确定性')
   }
 }
 

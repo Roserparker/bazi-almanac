@@ -722,6 +722,18 @@ input[type="date"], input[type="time"] {
 @keyframes ghostOut { 0% { opacity: 0.9; transform: none; } 100% { opacity: 0; transform: translateY(6px) scale(0.9); } }
 .zw-yunxian { font-size: 13.5px; color: var(--dai); line-height: 1.85; margin: 2px 0 8px; }
 .zw-pop-star { cursor: help; border-bottom: 1px dashed var(--ink-faint); }
+.zw-pop-more { margin-top: 8px; font-size: 11.5px; color: var(--zhe); }
+/* 宫位深批（盘下四段分析） */
+.zw-deep { margin-top: 12px; }
+.zw-deep-in { padding: 12px 14px 10px; background: var(--paper); border: 1px solid var(--line-soft); border-radius: 8px; animation: fadeUp 0.3s ease; }
+.zw-dp { display: flex; gap: 10px; font-size: 13.5px; line-height: 1.9; color: var(--ink-soft); margin: 7px 0; }
+.zw-dp-k {
+  flex: none; align-self: flex-start; font-family: var(--serif); font-size: 12px; letter-spacing: 0.08em;
+  color: var(--ink-faint); border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; line-height: 1.8; margin-top: 3px;
+}
+.zw-dp-trend { color: var(--ink); }
+.zw-dp-trend .zw-dp-k { color: #7a5c10; border-color: rgba(181, 142, 37, 0.55); background: rgba(181, 142, 37, 0.08); }
+@media (prefers-reduced-motion: reduce) { .zw-deep-in { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .zw-ghost, .zw-links line, .zw-links .zl-dot { animation: none !important; } }
 .zw-advice { margin-top: 14px; padding: 12px 14px 10px; background: var(--paper); border: 1px solid var(--line-soft); border-radius: 8px; }
 .zw-adv-theme { font-family: var(--serif); font-size: 15.5px; margin: 2px 0 8px; line-height: 1.7; }

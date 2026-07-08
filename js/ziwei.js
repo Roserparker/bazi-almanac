@@ -357,9 +357,139 @@
     return { fl: fl, gong: ri.palace, gongZhi: ri.gongZhi, stars: gs, theme: theme, starLines: starLines, huaLines: huaLines, chen: chen, yunxian: yunxian }
   }
 
+  /*
+   * ———— 宫位深批：三方四正会商 × 大限十年 × 流年今岁 × 趋势合断 ————
+   * 规则合成的四段分析（非断言口径）：
+   *   sanfang —— 本宫与三方四正的格局判读（杀破狼/府相/日月/机梁 + 吉煞配比 + 生年四化落垣）
+   *   daxian —— 大限与此宫的位置关系 + 限四化入垣的十年影响
+   *   liunian —— 流年与此宫的位置关系 + 年四化入垣的今年功课
+   *   trend —— 限×年叠加的趋势一句（起/承/敛/转，去恐吓化）
+   */
+  var STAR_TONE2 = {
+    紫微: '尊贵持重', 天机: '灵动多谋', 太阳: '外放照人', 武曲: '刚毅务实', 天同: '温和自适',
+    廉贞: '才情多变', 天府: '稳健守成', 太阴: '内敛蓄藏', 贪狼: '活力多欲', 巨门: '深究善辩',
+    天相: '公道辅佐', 天梁: '荫护老成', 七杀: '冲锋决断', 破军: '破旧立新'
+  }
+  var JI_XING = ['左辅', '右弼', '文昌', '文曲', '天魁', '天钺', '禄存']
+  var SHA_XING = ['擎羊', '陀罗', '火星', '铃星', '地空', '地劫']
+  var NATAL_HUA_TXT = {
+    化禄: '生年禄坐此垣——底子里带一分财缘与顺遂',
+    化权: '生年权在此——天生对这一司有掌控欲，也压得住担子',
+    化科: '生年科照——名声与文书是此处的护身符',
+    化忌: '生年忌埋在此垣——命里的一门长期功课，认了它反而轻'
+  }
+  var DX_HUA_TXT = {
+    化禄: '限禄注入——这十年此处越走越顺，资源渐聚',
+    化权: '限权到位——十年间主动权渐入手，担子也随之而来',
+    化科: '限科来照——十年里名声文书渐立',
+    化忌: '限忌所指——十年反复叩问之处，是大限的主功课'
+  }
+  var LN_HUA_TXT = {
+    化禄: '年禄入垣——今年此处顺水，宜趁势落实',
+    化权: '年权入垣——今年宜在此主动请缨',
+    化科: '年科入垣——今年此处宜亮相正名',
+    化忌: '年忌入垣——今年此处多想多绊，宜慢半拍、留余地'
+  }
+  function gongAnalysis(zw, fl, gong) {
+    var group = [gong, mod12(gong + 4), mod12(gong + 8), mod12(gong + 6)]
+    var pmap = {}
+    zw.palaces.forEach(function (q) { pmap[q.zhiIdx] = q })
+    var p = pmap[gong]
+    if (!p) return null
+    // 会商组：各宫主星（本宫空则借对宫）与全部星曜名单
+    var names = {}, majorsOf = {}
+    group.forEach(function (z) {
+      var g = gongStars(zw, z)
+      majorsOf[z] = g
+      ;(zw.starsByZhi[z] || []).forEach(function (s) { names[s.name] = s })
+      g.stars.forEach(function (s) { names[s.name] = names[s.name] || s })
+    })
+    function hasAll(list) { return list.every(function (n) { return names[n] }) }
+    var ju
+    if (hasAll(['七杀', '破军', '贪狼'])) ju = '会齐「杀破狼」——动局：这一司十年不甘守旧，机会在变动里，宜以整备代观望、以攻代守'
+    else if (hasAll(['天府', '天相'])) ju = '府相相会——稳局：根基厚、有靠山，宜守成中求精进，不必急'
+    else if (hasAll(['太阳', '太阴'])) ju = '日月并照——内外兼修之局：明处担事、暗处蓄力，两条线都要经营'
+    else if (hasAll(['天机', '天梁']) || hasAll(['天机', '天同'])) ju = '机梁同会——筹谋安稳之局：宜按部就班，以巧劲代蛮力'
+    else {
+      var tones = []
+      group.forEach(function (z) {
+        majorsOf[z].stars.slice(0, 1).forEach(function (s) { if (STAR_TONE2[s.name] && tones.indexOf(STAR_TONE2[s.name]) < 0) tones.push(STAR_TONE2[s.name]) })
+      })
+      ju = '会商之气以「' + tones.slice(0, 3).join('、') + '」为主调'
+    }
+    var ji = 0, sha = 0
+    Object.keys(names).forEach(function (n) { if (JI_XING.indexOf(n) >= 0) ji++; if (SHA_XING.indexOf(n) >= 0) sha++ })
+    var jiSha = ji > sha + 1 ? '吉辅成群而煞轻——得人得势，谋事有人抬轿'
+      : sha > ji + 1 ? '煞曜偏多——这一司做事多磨，但磨出来的最扎实；宜慢、宜实、宜留余地'
+      : '吉煞相济（' + ji + '吉' + sha + '煞）——有帮衬也有考验，成色看拿捏'
+    var natal = []
+    group.forEach(function (z) {
+      (zw.starsByZhi[z] || []).forEach(function (s) { if (s.hua) natal.push(NATAL_HUA_TXT[s.hua] + '（' + s.name + '在' + (pmap[z] ? pmap[z].name : ZHI[z]) + '）') })
+    })
+    var own = majorsOf[gong]
+    var ownDesc = own.stars.length ? own.stars.slice(0, 2).map(function (s) { return s.name }).join('') + (own.borrowed ? '（借对宫）' : '') : '静'
+    var sanfang = '本宫坐' + ownDesc + '，与三合「' + pmap[mod12(gong + 4)].name + '」「' + pmap[mod12(gong + 8)].name + '」、对照「' + pmap[mod12(gong + 6)].name + '」同参：' + ju + '。' + jiSha + '。' + (natal.length ? natal.join('；') + '。' : '')
+    // 位置关系描述
+    function relTo(z) {
+      if (z === gong) return 'self'
+      if (group.indexOf(z) >= 0) return 'group'
+      return 'far'
+    }
+    function huaHits(layer, TXT) {
+      var out = []
+      if (!layer || !layer.sihua) return out
+      layer.sihua.list.forEach(function (h) {
+        if (group.indexOf(h.zhiIdx) >= 0) out.push(TXT[h.hua] + (h.zhiIdx === gong ? '（正入本宫）' : '（入' + (pmap[h.zhiIdx] ? pmap[h.zhiIdx].name : ZHI[h.zhiIdx]) + '）'))
+      })
+      return out
+    }
+    function layerScore(layer) {
+      var v = 0
+      if (!layer || !layer.sihua) return 0
+      layer.sihua.list.forEach(function (h) {
+        if (group.indexOf(h.zhiIdx) < 0) return
+        v += { 化禄: 2, 化权: 1, 化科: 1, 化忌: -2 }[h.hua] * (h.zhiIdx === gong ? 1.5 : 1)
+      })
+      return v
+    }
+    // 大限段
+    var daxian, dxScore = 0
+    if (!fl.dx) daxian = '未知大限（生辰信息不全）。'
+    else if (fl.dx.tong) daxian = '尚在童限（' + fl.dx.startAge + '岁起第一限）——十年之风未起，此宫暂行常度。'
+    else {
+      var r1 = relTo(fl.dx.gong)
+      var dxHits = huaHits(fl.dx, DX_HUA_TXT)
+      dxScore = layerScore(fl.dx) + (r1 === 'self' ? 1.5 : r1 === 'group' ? 0.5 : 0)
+      daxian = '大限（' + fl.dx.startAge + '–' + fl.dx.endAge + '岁）' +
+        (r1 === 'self' ? '正行此宫——十年天气直接落在这一司，宫中之星就是十年之臣'
+          : r1 === 'group' ? '行「' + fl.dx.palace + '」，在此宫三方四正之内——十年之气斜照此司，间接而持续'
+          : '行「' + fl.dx.palace + '」，与此宫无直会——十年主线不在此，这一司行常度、受远光') + '。' +
+        (dxHits.length ? dxHits.join('；') + '。' : '限内四化未入此垣，十年里此司平稳少扰。')
+    }
+    // 流年段
+    var r2 = relTo(fl.nian.gong)
+    var lnHits = huaHits(fl.nian, LN_HUA_TXT)
+    var lnScore = layerScore(fl.nian) + (r2 === 'self' ? 1.5 : r2 === 'group' ? 0.5 : 0)
+    var liunian = '流年' + fl.nian.gan + fl.nian.zhi +
+      (r2 === 'self' ? '太岁坐此——今年功课正在这一司，此宫之事被反复叩问'
+        : r2 === 'group' ? '过「' + fl.nian.palace + '」，会照此宫——今年之气侧身而入，此司有感而不迫'
+        : '过「' + fl.nian.palace + '」，不与此宫直会——今年此司大体行其常') + '。' +
+      (lnHits.length ? lnHits.join('；') + '。' : '年四化未入此垣，今年此处顺其自然即可。')
+    // 趋势合断
+    var trend
+    if (dxScore > 0.5 && lnScore > 0.5) trend = '限年同暖：十年向好、今年加持——趋势向上，宜乘势把此司之事往前推一格。'
+    else if (dxScore > 0.5 && lnScore < -0.5) trend = '大势向暖、今岁有坎：十年趋势不改，今年节奏放缓——把今年当整固期，不因一年疑十年。'
+    else if (dxScore < -0.5 && lnScore > 0.5) trend = '十年功课未了、今年得喘息：宜借今年的顺手处整备补课——趋势在养，养好则后段转扬。'
+    else if (dxScore < -0.5 && lnScore < -0.5) trend = '限年同敛：此司正处深耕蛰养之期——趋势不在攻而在守，守得住便是赢。'
+    else trend = '限年皆平：此司平流缓进——趋势无大起伏，日拱一卒最相宜。'
+    trend += '（趋势为模型合断，福祸相依、非命定论。）'
+    return { name: p.name, gz: p.gan + p.zhi, sanfang: sanfang, daxian: daxian, liunian: liunian, trend: trend, dxScore: dxScore, lnScore: lnScore }
+  }
+
   var Ziwei = {
     buildFromBirth: buildFromBirth, buildFromLunar: buildFromLunar, daXian: daXian,
     flowSiHua: flowSiHua, flowLayers: flowLayers, dayAdvice: dayAdvice, gongStars: gongStars,
+    gongAnalysis: gongAnalysis,
     sanFangSiZheng: sanFangSiZheng, starZhi: starZhi,
     ziweiPos: ziweiPos, naYinElement: naYinElement, palaceGan: palaceGan,
     SIHUA: SIHUA, SIHUA_NAMES: SIHUA_NAMES, STAR_EL: STAR_EL, STAR_NOTE: STAR_NOTE,

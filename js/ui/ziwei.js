@@ -99,10 +99,27 @@
     }
   }
 
-  // 点宫：换三方四正焦点 + 出详批浮层（app.js 调用）
+  // 宫位深批（盘下四段分析：会商 × 大限 × 流年 × 趋势）
+  function deepHTML(zhiIdx) {
+    if (!lastZw || !lastFl || !window.Ziwei.gongAnalysis) return ''
+    var a = Z.gongAnalysis(lastZw, lastFl, zhiIdx)
+    if (!a) return ''
+    return '<div class="zw-deep-in">' +
+      '<div class="obs-cap">宫位深批 · ' + a.name + '<span class="t-se" style="margin-left:6px">' + a.gz + '</span>' +
+        '<span class="obs-sub">三方四正 × 大限 × 流年 · 点任一宫换深批</span></div>' +
+      '<div class="zw-dp"><span class="zw-dp-k">会商</span>' + a.sanfang + '</div>' +
+      '<div class="zw-dp"><span class="zw-dp-k">大限</span>' + a.daxian + '</div>' +
+      '<div class="zw-dp"><span class="zw-dp-k">流年</span>' + a.liunian + '</div>' +
+      '<div class="zw-dp zw-dp-trend"><span class="zw-dp-k">趋势</span>' + a.trend + '</div>' +
+    '</div>'
+  }
+
+  // 点宫：换三方四正焦点 + 盘下深批随之 + 出详批浮层（app.js 调用）
   function onPalaceClick(zhiIdx) {
     activeGong = zhiIdx
     drawLinks()
+    var deep = document.getElementById('zw-deep')
+    if (deep) deep.innerHTML = deepHTML(zhiIdx)
     return palacePopHTML(zhiIdx)
   }
 
@@ -156,7 +173,8 @@
       if (rows.length) x += rows.map(function (r) { return '<div class="tp good">' + r + '</div>' }).join('')
       else x += '<div class="tp"><b>此日</b>大限、流年、流月、流日皆不在此宫，四化亦未入——此司今日无事，各安其位。</div>'
     }
-    x += '<div class="dao">宫如朝中一司，星如当值之臣；限年月日如四道公文，到哪一司，哪一司便忙。</div>'
+    x += '<div class="dao">宫如朝中一司，星如当值之臣；限年月日如四道公文，到哪一司，哪一司便忙。</div>' +
+      '<div class="zw-pop-more">▼ 此宫深批（会商格局 × 大限十年 × 流年今岁 × 趋势）已列于盘下</div>'
     return x
   }
 
@@ -258,6 +276,7 @@
         '<span class="zw-lg"><span class="zw-lay zw-lay-x">限</span><span class="zw-lay zw-lay-n">年</span><span class="zw-lay zw-lay-y">月</span><span class="zw-lay zw-lay-r">日</span>运限落宫</span>' +
         '<span class="zw-lg zw-lg-sfsz">青线 = 焦点宫的三方四正（实线对照 · 虚线三合）· 点任一宫换焦点看详批</span>' +
       '</div>' +
+      '<div id="zw-deep" class="zw-deep">' + deepHTML(activeGong) + '</div>' +
       advice +
       '<div class="disclaimer">星曜如朝臣，各有司职、各有两面——点星、点宫名、点宫格皆可细看。紫微与八字是两把尺，参差处正是可玩味处；皆为参考视角，非断言。</div>'
 
