@@ -135,6 +135,10 @@
       if (top !== null) { var el2 = document.getElementById('ziwei'); if (el2) window.scrollBy(0, el2.getBoundingClientRect().top - top) }
     } else if (action === 'zwLayer') {
       if (UI.ziwei) { UI.ziwei.setLayer(ds.layer); UI.ziwei.renderZiwei(state) }
+    } else if (action === 'hideGuide') {
+      var g = document.getElementById('guide')
+      if (g) g.hidden = true
+      try { localStorage.setItem('huaji.guide', 'hidden') } catch (e3) {}
     }
   }
 
@@ -213,4 +217,11 @@
   UI.learn.renderYixue()
   renderIntake()
   renderAll()
+  // 导览卡：收起状态记本机
+  try {
+    if (localStorage.getItem('huaji.guide') === 'hidden') {
+      var gd = document.getElementById('guide')
+      if (gd) gd.hidden = true
+    }
+  } catch (e4) {}
 })()

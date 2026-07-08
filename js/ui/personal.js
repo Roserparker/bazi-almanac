@@ -215,7 +215,14 @@
 
   function renderPersonal(state) {
     var host = document.getElementById('personal')
-    if (!state.chart) { host.innerHTML = ''; return }
+    if (!state.chart) {
+      // 未录生辰也给落点：导航「八字盘」跳来不再是一片空白
+      host.innerHTML =
+        '<section class="card"><h2 class="sect-title">八字命盘 · 今日详解</h2>' +
+        '<div class="dash-cta"><button class="btn" data-action="gotoIntake">录入生辰 · 解锁命盘与每日详解</button>' +
+        '<span class="hint">生辰只存本机，不上传</span></div></section>'
+      return
+    }
     var chart = state.chart, st = state.st, yong = state.yong
     var d = E.buildDay(state.sel)
     var reading = I.dayReading(chart, d, yong)

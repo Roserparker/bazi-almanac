@@ -19,8 +19,19 @@
       </header>
 
       <nav class="topnav">
-        <a href="#dashboard">今日</a><a href="#almanac">万年历</a><a href="#personal">命盘</a><a href="#ziwei">紫微</a><a href="#btc">观象</a><a href="#learn">学堂</a><a href="#yixue">易学</a>
+        <a href="#dashboard">今日</a><a href="#almanac">万年历</a><span class="nsep"></span><a href="#personal">八字盘</a><a href="#ziwei">紫微盘</a><span class="nsep"></span><a href="#btc">BTC观象</a><span class="nsep"></span><a href="#learn">学堂</a><a href="#yixue">易学</a>
       </nav>
+
+      <!-- 本站导览（可收起，收起状态记本机） -->
+      <section id="guide" class="card guide">
+        <button class="guide-x" data-action="hideGuide" title="收起导览">×</button>
+        <div class="guide-grid">
+          <a class="g-tile gt-shui" href="#dashboard"><b>① 我的每日</b><span>今日仪表盘与万年历——顺逆、化机指数、宜与缓</span></a>
+          <a class="g-tile gt-mu" href="#personal"><b>② 我的盘</b><span>八字命盘 · 紫微星盘——录入生辰，本机排盘不上传</span></a>
+          <a class="g-tile gt-huo" href="#btc"><b>③ BTC 观象台</b><span>给比特币排的八字 + 每日六爻奇门——观大势之娱，非投资建议</span></a>
+          <a class="g-tile gt-jin" href="#learn"><b>④ 学堂</b><span>八字与易学入门——页上任何术语，点开都能学</span></a>
+        </div>
+      </section>
 
       <!-- 今日仪表盘（首屏） -->
       <section id="dashboard" class="card dash"></section>
@@ -34,10 +45,7 @@
       <!-- 紫微斗数 · 个人星盘（辅助板块） -->
       <section id="ziwei" class="card"></section>
 
-      <!-- 观象台 · BTC（创世八字 × 流年月日 + 六爻 + 奇门） -->
-      <section id="btc" class="card"></section>
-
-      <!-- 录入生辰 -->
+      <!-- 录入生辰（属「我的盘」板块组） -->
       <section id="intake" class="card">
         <h2 class="sect-title">录入生辰 · 解锁你的化学反应</h2>
         <form id="birth-form" class="birth-form" autocomplete="off">
@@ -59,11 +67,14 @@
             </div>
           </div>
           <button type="submit" class="btn">排 盘</button>
-          <span class="hint">时间不确定可留 12:00，仅影响时柱</span>
+          <span class="hint">时间不确定可留 12:00，仅影响时柱与紫微时系星</span>
         </form>
         <div id="intake-summary" hidden></div>
         <p class="privacy">· 生辰仅存于本机浏览器，不上传、不联网、可随时清除 ·</p>
       </section>
+
+      <!-- 观象台 · BTC（创世八字 × 流年月日 + 六爻 + 奇门） -->
+      <section id="btc" class="card"></section>
 
       <!-- 教学 -->
       <section id="learn" class="card"></section>

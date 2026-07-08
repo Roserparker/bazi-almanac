@@ -29,6 +29,9 @@
 * { box-sizing: border-box; }
 /* [hidden] 兜底：下方对 .birth-form / #intake-summary 声明的 display 会盖过 UA 的 [hidden] 规则 */
 [hidden] { display: none !important; }
+/* 锚点跳转：平滑滚动 + 预留吸顶导航高度，落点不再被遮 */
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+section[id], main[id] { scroll-margin-top: 54px; }
 html, body {
   margin: 0;
   background: linear-gradient(168deg, #f4ecda 0%, #ebddc6 100%) fixed;
@@ -63,6 +66,32 @@ html, body {
   color: var(--ink-soft); text-decoration: none; padding: 3px 12px; border-radius: 4px; white-space: nowrap;
 }
 .topnav a:hover { color: var(--ink); background: rgba(176, 138, 44, 0.1); }
+.topnav .nsep { width: 1px; align-self: stretch; margin: 4px 5px; background: var(--line); flex: none; }
+
+/* ———— 本站导览（可收起） ———— */
+.guide { position: relative; padding: 14px 18px 12px; }
+.guide-x {
+  position: absolute; top: 6px; right: 10px; z-index: 1;
+  background: none; border: none; color: var(--ink-faint); font-size: 17px; cursor: pointer; padding: 4px 6px;
+}
+.guide-x:hover { color: var(--zhe); }
+.guide-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.g-tile {
+  display: flex; flex-direction: column; gap: 3px; text-decoration: none;
+  padding: 9px 12px 8px; border-radius: 7px; background: var(--paper);
+  border: 1px solid var(--line-soft); border-left-width: 3px;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.g-tile:hover { transform: translateY(-1.5px); box-shadow: 0 4px 14px rgba(70, 48, 16, 0.09); }
+.g-tile b { font-family: var(--serif); font-size: 13.5px; color: var(--ink); letter-spacing: 0.04em; font-weight: 600; }
+.g-tile span { font-size: 11.5px; color: var(--ink-soft); line-height: 1.6; }
+.gt-shui { border-left-color: var(--shui); }
+.gt-mu { border-left-color: var(--mu); }
+.gt-huo { border-left-color: var(--huo); }
+.gt-jin { border-left-color: var(--jin); }
+@media (prefers-reduced-motion: reduce) { .g-tile { transition: none; } .g-tile:hover { transform: none; } }
+@media (max-width: 700px) { .guide-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 430px) { .guide { padding: 11px 12px 10px; } .guide-grid { grid-template-columns: 1fr; gap: 6px; } }
 
 /* ———— 今日仪表盘 ———— */
 .dash-date { font-family: var(--serif); font-size: 18px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
