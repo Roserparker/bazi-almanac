@@ -19,34 +19,34 @@
       </header>
 
       <nav class="topnav">
-        <a href="#dashboard">今日</a><a href="#almanac">万年历</a><span class="nsep"></span><a href="#personal">八字盘</a><a href="#ziwei">紫微盘</a><span class="nsep"></span><a href="#btc">BTC观象</a><span class="nsep"></span><a href="#learn">学堂</a><a href="#yixue">易学</a>
+        <a href="#/dashboard">今日</a><a href="#/almanac">万年历</a><span class="nsep"></span><a href="#/personal">八字盘</a><a href="#/ziwei">紫微盘</a><span class="nsep"></span><a href="#/btc">BTC观象</a><span class="nsep"></span><a href="#/learn">学堂</a>
       </nav>
 
-      <!-- 本站导览（可收起，收起状态记本机） -->
-      <section id="guide" class="card guide">
+      <!-- 本站导览（首页；可收起，收起状态记本机） -->
+      <section id="guide" class="card guide view" data-view="dashboard">
         <button class="guide-x" data-action="hideGuide" title="收起导览">×</button>
         <div class="guide-grid">
-          <a class="g-tile gt-shui" href="#dashboard"><b>① 我的每日</b><span>今日仪表盘与万年历——顺逆、化机指数、宜与缓</span></a>
-          <a class="g-tile gt-mu" href="#personal"><b>② 我的盘</b><span>八字命盘 · 紫微星盘——录入生辰，本机排盘不上传</span></a>
-          <a class="g-tile gt-huo" href="#btc"><b>③ BTC 观象台</b><span>给比特币排的八字 + 每日六爻奇门——观大势之娱，非投资建议</span></a>
-          <a class="g-tile gt-jin" href="#learn"><b>④ 学堂</b><span>八字与易学入门——页上任何术语，点开都能学</span></a>
+          <a class="g-tile gt-shui" href="#/almanac"><b>① 我的每日</b><span>今日仪表盘与万年历——顺逆、化机指数、宜与缓</span></a>
+          <a class="g-tile gt-mu" href="#/personal"><b>② 我的盘</b><span>八字命盘 · 紫微星盘——录入生辰，本机排盘不上传</span></a>
+          <a class="g-tile gt-huo" href="#/btc"><b>③ BTC 观象台</b><span>给比特币排的八字 + 每日六爻奇门——观大势之娱，非投资建议</span></a>
+          <a class="g-tile gt-jin" href="#/learn"><b>④ 学堂</b><span>八字与易学入门——页上任何术语，点开都能学</span></a>
         </div>
       </section>
 
-      <!-- 今日仪表盘（首屏） -->
-      <section id="dashboard" class="card dash"></section>
+      <!-- 今日仪表盘（首页） -->
+      <section id="dashboard" class="card dash view" data-view="dashboard"></section>
 
       <!-- 万年历（带顺逆点） -->
-      <section id="almanac" class="card"></section>
+      <section id="almanac" class="card view" data-view="almanac"></section>
 
       <!-- 个人化：选定日详解 + 本命盘（录入后出现） -->
-      <main id="personal"></main>
+      <main id="personal" class="view" data-view="personal"></main>
 
       <!-- 紫微斗数 · 个人星盘（辅助板块） -->
-      <section id="ziwei" class="card"></section>
+      <section id="ziwei" class="card view" data-view="ziwei"></section>
 
       <!-- 录入生辰（属「我的盘」板块组） -->
-      <section id="intake" class="card">
+      <section id="intake" class="card view" data-view="personal">
         <h2 class="sect-title">录入生辰 · 解锁你的化学反应</h2>
         <form id="birth-form" class="birth-form" autocomplete="off">
           <div class="form-grid">
@@ -74,13 +74,13 @@
       </section>
 
       <!-- 观象台 · BTC（创世八字 × 流年月日 + 六爻 + 奇门） -->
-      <section id="btc" class="card"></section>
+      <section id="btc" class="card view" data-view="btc"></section>
 
-      <!-- 教学 -->
-      <section id="learn" class="card"></section>
+      <!-- 教学（学堂 + 易学 同属一页） -->
+      <section id="learn" class="card view" data-view="learn"></section>
 
       <!-- 易学 · 八卦五行 -->
-      <section id="yixue" class="card"></section>
+      <section id="yixue" class="card view" data-view="learn"></section>
 
       <footer class="footer">
         <div class="foot-note">

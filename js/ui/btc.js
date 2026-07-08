@@ -102,15 +102,17 @@
     var change = cast.moving.length
       ? '<div class="ly-arrow">' + cast.moving.length + ' 爻动 →</div>' + guaHTML(cast.bian, cast, false)
       : ''
-    return '<div class="obs-block">' +
-      '<div class="obs-cap">每日一卦 · 六爻观澜 <span class="obs-sub">以日为种，三钱成卦 · 问财以妻财爻为用神</span></div>' +
+    return '<details class="obs-block obs-fold"><summary>' +
+      '<span class="obs-cap">每日一卦 · 六爻</span> <b class="of-name">' + cast.ben.hex.info.n + (cast.moving.length ? ' 之 ' + cast.bian.hex.info.n : '') + '</b>' +
+      '<span class="obs-tend obs-' + TEND_CLS[j.tendency] + '">' + j.tendency + '</span><i class="of-arrow">▾</i>' +
+      '<span class="obs-sub">以日为种三钱成卦 · 问财观妻财爻 · 点开看装卦与断语</span></summary>' +
       '<div class="ly-wrap">' + guaHTML(cast.ben, cast, true) + change + '</div>' +
       '<div class="ly-ci">「' + cast.ben.hex.info.ci + '」<span class="ly-su">' + cast.ben.hex.info.su + '</span></div>' +
       (cast.moving.length ? '<div class="ly-yao">动爻 · ' + cast.yaoNote + '</div>' : '<div class="ly-yao">' + cast.yaoNote + '</div>') +
       '<div class="ly-judge"><span class="obs-tend obs-' + TEND_CLS[j.tendency] + '">' + j.tendency + '</span>' +
         '<span class="ly-js">' + (j.score > 0 ? '+' : '') + j.score + '</span></div>' +
       '<ul class="obs-list">' + j.reasons.map(function (r) { return '<li>' + r + '</li>' }).join('') + '</ul>' +
-    '</div>'
+    '</details>'
   }
 
   // ———— 奇门九宫 ————
@@ -137,13 +139,15 @@
       })
     })
     var r = q.reading
-    return '<div class="obs-block">' +
-      '<div class="obs-cap">奇门遁甲 · 午时盘 <span class="obs-sub">时家转盘 · 拆补法 · 问财观生门与戊</span></div>' +
+    return '<details class="obs-block obs-fold"><summary>' +
+      '<span class="obs-cap">奇门遁甲 · 午时盘</span> <b class="of-name">' + q.juName + '</b>' +
+      '<span class="obs-tend obs-' + TEND_CLS[r.tendency] + '">' + r.tendency + '</span><i class="of-arrow">▾</i>' +
+      '<span class="obs-sub">时家转盘拆补法 · 问财观生门与戊 · 点开看九宫盘</span></summary>' +
       '<div class="qm-meta">' + q.jieQi + q.yuan + ' · <b>' + q.juName + '</b> · ' + q.dayGz + '日 ' + q.shiGz + '时 · 值符<b>' + q.zhiFu.star + '</b>落' + q.zhiFu.palace + '宫 · 值使<b>' + q.zhiShi.door + '</b>落' + q.zhiShi.palace + '宫</div>' +
       '<div class="qm-grid">' + cells + '</div>' +
       '<div class="ly-judge"><span class="obs-tend obs-' + TEND_CLS[r.tendency] + '">' + r.tendency + '</span><span class="ly-js">' + (r.score > 0 ? '+' : '') + r.score + '</span></div>' +
       '<ul class="obs-list">' + r.bullets.map(function (b) { return '<li>' + b + '</li>' }).join('') + '</ul>' +
-    '</div>'
+    '</details>'
   }
 
   // ———— 主渲染 ————

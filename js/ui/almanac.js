@@ -187,7 +187,7 @@
       var lu2 = '', ji2 = ''
       flz.ri.sihua.list.forEach(function (h) { if (h.hua === '化禄') lu2 = h.palace; if (h.hua === '化忌') ji2 = h.palace })
       lr += '<div class="lr-line"><span class="lr-k">紫微此日</span>流日入「' + flz.ri.palace + '」 · 禄→' + (lu2 || '外') + ' 忌→' + (ji2 || '外') +
-        '　<a href="#ziwei" class="link-btn">看星盘 ↓</a></div>'
+        '　<a href="#/ziwei" class="link-btn">看星盘 →</a></div>'
     }
     return (
       '<div class="day-panel">' +

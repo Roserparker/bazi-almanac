@@ -124,7 +124,8 @@
     } else if (action === 'clear') {
       wipe(); state.birth = null; refreshChart(); renderIntake(); renderAll()
     } else if (action === 'gotoIntake') {
-      document.getElementById('intake').scrollIntoView({ behavior: 'smooth' })
+      location.hash = '#/personal'
+      requestAnimationFrame(function () { document.getElementById('intake').scrollIntoView({ behavior: 'smooth' }) })
     } else if (action === 'closePop') {
       P.closeTerm()
     } else if (action === 'zwPrev' || action === 'zwNext') {
@@ -151,7 +152,7 @@
     if (hd) { var x = hintOf(hd); if (x) P.showPop(P.hintPopHTML(x.h, x.title), e.clientX, e.clientY); P.hideTip(); e.stopPropagation(); return }
     var zc = e.target.closest('.zw-cell')
     if (zc && zc.dataset.zhi !== undefined && UI.ziwei) {
-      P.showPop(UI.ziwei.palacePopHTML(Number(zc.dataset.zhi)), e.clientX, e.clientY)
+      P.showPop(UI.ziwei.onPalaceClick(Number(zc.dataset.zhi)), e.clientX, e.clientY)
       P.hideTip(); e.stopPropagation(); return
     }
     var a = e.target.closest('[data-action]')
@@ -208,8 +209,28 @@
     save(state.birth)
     refreshChart()
     renderIntake(); renderAll()
-    document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' })
+    location.hash = '#/dashboard'
+    window.scrollTo(0, 0)
   })
+
+  // ======== 视图路由（#/board 一板一页；旧锚点自动映射） ========
+  var VIEWS = { dashboard: 1, almanac: 1, personal: 1, ziwei: 1, btc: 1, learn: 1 }
+  var VIEW_ALIAS = { yixue: 'learn', intake: 'personal', guide: 'dashboard', today: 'dashboard' }
+  function viewFromHash() {
+    var h = (location.hash || '').replace(/^#\/?/, '')
+    if (VIEWS[h]) return h
+    if (VIEW_ALIAS[h]) return VIEW_ALIAS[h]
+    return 'dashboard'
+  }
+  function setView(v) {
+    document.body.setAttribute('data-view', v)
+    var links = document.querySelectorAll('.topnav a')
+    for (var i = 0; i < links.length; i++) links[i].classList.toggle('on', links[i].getAttribute('href') === '#/' + v)
+    window.scrollTo(0, 0)
+    P.closeTerm(); P.hideTip()
+    if (F.animateScores) F.animateScores()
+  }
+  window.addEventListener('hashchange', function () { setView(viewFromHash()) })
 
   // ======== 初始化 ========
   refreshChart()
@@ -217,6 +238,7 @@
   UI.learn.renderYixue()
   renderIntake()
   renderAll()
+  setView(viewFromHash())
   // 导览卡：收起状态记本机
   try {
     if (localStorage.getItem('huaji.guide') === 'hidden') {

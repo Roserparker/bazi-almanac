@@ -70,8 +70,8 @@
         '<div class="zhen-note">谶以取象，奏以进言——非断言，乃参谋，圣裁在君。</div>' +
       '</blockquote>' +
       '<div class="dash-quote">「' + t.quote.t + '」<span class="q-src">——《' + t.quote.s + '》</span></div>' +
-      mini +
-      '<div class="dash-more"><a href="#personal" class="link-btn">看今日详解与本命盘 ↓</a></div>' +
+      '<details class="ts-fold"><summary>时间层叠加 · 大运→流年→流月→流日 ▾</summary>' + mini + '</details>' +
+      '<div class="dash-more"><a href="#/personal" class="link-btn">看今日详解与本命盘 →</a>　<a href="#/btc" class="link-btn">去 BTC 观象台 →</a></div>' +
       folkFold(d)
   }
 

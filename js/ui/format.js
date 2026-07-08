@@ -71,10 +71,32 @@
     return first && year < first.startYear ? '尚未起运（童限）' : '已过排定大运范围'
   }
 
+  // 指数数字滚动（微互动）：渲染后对 .idx-score 从低处滚到目标值
+  function animateScores() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    var els = document.querySelectorAll('.idx-score')
+    for (var i = 0; i < els.length; i++) {
+      ;(function (el) {
+        var target = parseInt(el.textContent, 10)
+        if (!target || el.dataset.rolled === String(target)) return
+        el.dataset.rolled = String(target)
+        var start = Math.max(0, target - 16), t0 = null
+        function step(ts) {
+          if (!t0) t0 = ts
+          var p = Math.min(1, (ts - t0) / 400)
+          el.textContent = Math.round(start + (target - start) * (1 - Math.pow(1 - p, 3)))
+          if (p < 1) requestAnimationFrame(step)
+          else el.textContent = target
+        }
+        requestAnimationFrame(step)
+      })(els[i])
+    }
+  }
+
   UI.fmt = {
     WX: WX, ELC: ELC, REL_COLOR: REL_COLOR, WEEK_CN: WEEK_CN, GANSET: GANSET, TODAY: TODAY,
     assign: assign, pad2: pad2, pad4: pad4, ymd: ymd, same: same,
     tok: tok, gzTok: gzTok, term: term, esc: esc, wxChip: wxChip, daYunNote: daYunNote,
-    elIcon: elIcon, wxBadge: wxBadge, festChips: festChips
+    elIcon: elIcon, wxBadge: wxBadge, festChips: festChips, animateScores: animateScores
   }
 })()

@@ -32,6 +32,59 @@
 /* 锚点跳转：平滑滚动 + 预留吸顶导航高度，落点不再被遮 */
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 section[id], main[id] { scroll-margin-top: 54px; }
+
+/* ———— 视图路由：点导航进板块（每次只显一页，短而完整） ———— */
+.view { display: none; }
+body[data-view='dashboard'] .view[data-view='dashboard'],
+body[data-view='almanac'] .view[data-view='almanac'],
+body[data-view='personal'] .view[data-view='personal'],
+body[data-view='ziwei'] .view[data-view='ziwei'],
+body[data-view='btc'] .view[data-view='btc'],
+body[data-view='learn'] .view[data-view='learn'] { display: block; animation: viewIn 0.3s ease backwards; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(9px); } }
+/* 当前板块的导航项：鎏金墨线 */
+.topnav a { position: relative; transition: transform 0.12s ease; }
+.topnav a:active { transform: scale(0.94); }
+.topnav a.on { color: var(--ink); font-weight: 600; }
+.topnav a.on::after {
+  content: ''; position: absolute; left: 11px; right: 11px; bottom: 0; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-bright)); animation: navInk 0.28s ease;
+}
+@keyframes navInk { from { transform: scaleX(0.25); opacity: 0; } }
+/* 术语浮层弹入（每一次点击都有回应） */
+.pop { animation: popIn 0.2s cubic-bezier(0.34, 1.4, 0.64, 1); }
+@keyframes popIn { from { opacity: 0; transform: translateY(5px) scale(0.97); } }
+/* 入场错落：导览贴片 / 紫微宫格 / 六爻爻行 / 奇门九宫 */
+.g-tile { animation: fadeUp 0.32s ease backwards; }
+.g-tile:nth-child(2) { animation-delay: 0.05s; } .g-tile:nth-child(3) { animation-delay: 0.1s; } .g-tile:nth-child(4) { animation-delay: 0.15s; }
+.zw-grid > * { animation: fadeUp 0.3s ease backwards; }
+.zw-grid > *:nth-child(2) { animation-delay: 0.02s; } .zw-grid > *:nth-child(3) { animation-delay: 0.04s; }
+.zw-grid > *:nth-child(4) { animation-delay: 0.06s; } .zw-grid > *:nth-child(5) { animation-delay: 0.08s; }
+.zw-grid > *:nth-child(6) { animation-delay: 0.1s; } .zw-grid > *:nth-child(7) { animation-delay: 0.12s; }
+.zw-grid > *:nth-child(8) { animation-delay: 0.14s; } .zw-grid > *:nth-child(9) { animation-delay: 0.16s; }
+.zw-grid > *:nth-child(10) { animation-delay: 0.18s; } .zw-grid > *:nth-child(11) { animation-delay: 0.2s; }
+.zw-grid > *:nth-child(12) { animation-delay: 0.22s; } .zw-grid > *:nth-child(13) { animation-delay: 0.1s; }
+.ly-row { animation: fadeUp 0.26s ease backwards; }
+.ly-row:nth-child(2) { animation-delay: 0.04s; } .ly-row:nth-child(3) { animation-delay: 0.08s; }
+.ly-row:nth-child(4) { animation-delay: 0.12s; } .ly-row:nth-child(5) { animation-delay: 0.16s; }
+.ly-row:nth-child(6) { animation-delay: 0.2s; } .ly-row:nth-child(7) { animation-delay: 0.24s; }
+.qm-cell { animation: fadeUp 0.28s ease backwards; }
+.qm-cell:nth-child(2) { animation-delay: 0.04s; } .qm-cell:nth-child(3) { animation-delay: 0.08s; }
+.qm-cell:nth-child(4) { animation-delay: 0.12s; } .qm-cell:nth-child(5) { animation-delay: 0.16s; }
+.qm-cell:nth-child(6) { animation-delay: 0.2s; } .qm-cell:nth-child(7) { animation-delay: 0.24s; }
+.qm-cell:nth-child(8) { animation-delay: 0.28s; } .qm-cell:nth-child(9) { animation-delay: 0.32s; }
+/* 观象台内折叠块（六爻/奇门） */
+.obs-fold > summary { cursor: pointer; list-style: none; user-select: none; }
+.obs-fold > summary::-webkit-details-marker { display: none; }
+.obs-fold > summary .of-arrow { font-style: normal; color: var(--ink-faint); margin-left: 8px; transition: transform 0.2s ease; display: inline-block; }
+.obs-fold[open] > summary .of-arrow { transform: rotate(180deg); }
+.obs-fold > summary:hover .obs-cap { color: var(--zhe); }
+.ts-fold > summary { cursor: pointer; font-size: 12px; color: var(--ink-faint); letter-spacing: 0.04em; user-select: none; padding: 2px 0; }
+.ts-fold > summary:hover { color: var(--zhe); }
+@media (prefers-reduced-motion: reduce) {
+  .view, .g-tile, .zw-grid > *, .ly-row, .qm-cell, .pop, .topnav a.on::after { animation: none !important; }
+  .topnav a { transition: none; }
+}
 html, body {
   margin: 0;
   background: linear-gradient(168deg, #f4ecda 0%, #ebddc6 100%) fixed;
@@ -648,6 +701,28 @@ input[type="date"], input[type="time"] {
 .zw-lay-n { color: #8a4d20; border-color: rgba(168, 96, 47, 0.5); background: rgba(168, 96, 47, 0.07); }
 .zw-lay-y { color: #14517f; border-color: rgba(29, 104, 166, 0.45); background: rgba(29, 104, 166, 0.08); }
 .zw-lay-r { color: #7a5c10; border-color: rgba(181, 142, 37, 0.65); background: linear-gradient(150deg, rgba(240, 225, 166, 0.7), rgba(216, 189, 98, 0.55)); }
+.zw-lay-x { color: #5a3f7a; border-color: rgba(123, 81, 192, 0.4); background: rgba(123, 81, 192, 0.07); }
+/* 三方四正连线覆盖层 */
+.zw-wrap { position: relative; }
+.zw-links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.zw-links line { stroke: rgba(31, 95, 134, 0.5); animation: linkIn 0.4s ease; }
+.zw-links .zl-dui { stroke-width: 1.7; }
+.zw-links .zl-he { stroke-width: 1.3; stroke-dasharray: 5 4; }
+.zw-links .zl-dot { fill: rgba(31, 95, 134, 0.65); animation: linkIn 0.4s ease; }
+@keyframes linkIn { from { opacity: 0; } }
+.zw-cell.zw-act { border-color: var(--dai); box-shadow: inset 0 0 0 1.4px rgba(31, 95, 134, 0.5); }
+.zw-cell.zw-mate { border-color: rgba(31, 95, 134, 0.45); }
+/* 流曜残影：换日时旧宫的章渐隐——轨迹可见 */
+.zw-ghost {
+  position: absolute; right: 8px; top: 30px; z-index: 1;
+  font-size: 10px; font-family: var(--serif); font-weight: 600; line-height: 1.5;
+  padding: 0 4px; border-radius: 3px; border: 1px dashed var(--ink-faint); color: var(--ink-faint);
+  animation: ghostOut 1.2s ease forwards; pointer-events: none;
+}
+@keyframes ghostOut { 0% { opacity: 0.9; transform: none; } 100% { opacity: 0; transform: translateY(6px) scale(0.9); } }
+.zw-yunxian { font-size: 13.5px; color: var(--dai); line-height: 1.85; margin: 2px 0 8px; }
+.zw-pop-star { cursor: help; border-bottom: 1px dashed var(--ink-faint); }
+@media (prefers-reduced-motion: reduce) { .zw-ghost, .zw-links line, .zw-links .zl-dot { animation: none !important; } }
 .zw-advice { margin-top: 14px; padding: 12px 14px 10px; background: var(--paper); border: 1px solid var(--line-soft); border-radius: 8px; }
 .zw-adv-theme { font-family: var(--serif); font-size: 15.5px; margin: 2px 0 8px; line-height: 1.7; }
 .zw-adv-star { font-family: var(--serif); margin-right: 8px; cursor: help; border-bottom: 1px dashed var(--ink-faint); }
