@@ -294,6 +294,32 @@ console.log('\n=== 紫微斗数引擎 ===')
     const ad2 = Ziwei.dayAdvice(zw2, { year: 2026, month: 7, day: 6 })
     assert(JSON.stringify(ad) === JSON.stringify(ad2), '当日建议应确定')
     console.log('  ✓ 流层推宫：斗君恒等式 / 五虎遁流月干 / 流日顺行 / 当日建议四化俱全且确定')
+
+    // 大限：起限=局数、十年一限、阳男阴女顺/阴男阳女逆（与 iztro decadal 已对拍）
+    let izx = null
+    try { izx = require('iztro') } catch (e) {}
+    if (izx) {
+      const HOUR_OF2 = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+      for (const [y, gcn, g] of [[1990, '男', 1], [1991, '男', 1], [1990, '女', 0], [1991, '女', 0]]) {
+        const mine = Ziwei.buildFromBirth({ year: y, month: 6, day: 15, hour: HOUR_OF2[7], minute: 30, gender: g })
+        const theirs = izx.astro.bySolar(`${y}-6-15`, 7, gcn, false, 'zh-CN')
+        const tMap = {}
+        theirs.palaces.forEach((p) => { tMap[p.earthlyBranch] = p.decadal.range.join('-') })
+        for (let idx = 0; idx < 3; idx++) {
+          const dx = Ziwei.daXian(mine, mine.birthLunarYear + (mine.ju - 1) + idx * 10)
+          assert(dx && !dx.tong && dx.startAge + '-' + dx.endAge === tMap[dx.gongZhi], `大限不符 ${y}${gcn} 第${idx + 1}限`)
+        }
+        const tong = Ziwei.daXian(mine, mine.birthLunarYear)
+        assert(tong && tong.tong, '一岁应为童限')
+      }
+      console.log('  ✓ 大限：四种阴阳男女方向与 iztro decadal 全合 · 童限判定')
+    }
+    // flowLayers 应带 dx 且 dayAdvice 带运限视角
+    const fl3 = Ziwei.flowLayers(zw2, { year: 2026, month: 7, day: 6 })
+    assert(fl3.dx && !fl3.dx.tong && fl3.dx.sihua && fl3.dx.palace, 'flowLayers 应含大限层')
+    const ad3 = Ziwei.dayAdvice(zw2, { year: 2026, month: 7, day: 6 })
+    assert(ad3.yunxian && ad3.yunxian.includes('大限') && ad3.yunxian.includes('流年'), '建议应含运限视角')
+    console.log('  ✓ flowLayers.dx / dayAdvice.yunxian')
   }
 }
 

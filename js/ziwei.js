@@ -87,7 +87,23 @@
     天相: '印星 · 辅佐与公道——重承诺、善协调，也可能滥好人、随波逐流。',
     天梁: '荫星 · 庇护与老成——逢难有解、乐于照拂，也可能好为人师、操心太宽。',
     七杀: '将星 · 冲锋与决断——敢闯敢破、遇险不惧，宜有战场；无处使力时易自耗。',
-    破军: '先锋 · 破旧立新——变革的引擎，破而后立；只破不立则动荡，配禄则破中生机。'
+    破军: '先锋 · 破旧立新——变革的引擎，破而后立；只破不立则动荡，配禄则破中生机。',
+    左辅: '辅佐之星——得力的帮手与贵人缘，主稳重随和，默默把台子搭稳。',
+    右弼: '辅佐之星——机敏的援手，热心巧助；与左辅同见，众星得势。',
+    文昌: '文魁之星——文书、考学、条理与正统之才；也主对体面形式的在意。',
+    文曲: '文华之星——口才、才艺、灵感与韵味；用在专业是风流，散漫则成飘。',
+    禄存: '禄食之星——天生的积蓄缘与谨慎，守成有余；只须防守得太紧。',
+    天马: '驿动之星——出行迁移变动之机；与禄同乡为「禄马交驰」，动中生财。',
+    擎羊: '锋刃之星——冲劲与执行的利器；用于攻坚是刃，用于人际是刺。',
+    陀罗: '磨砺之星——韧性与反复并存；事多回旋不是坏事，是要你磨出真章。',
+    天魁: '阳贵之星——明处的贵人与提携，多得长辈师长之力。',
+    天钺: '阴贵之星——暗处的荫护与照拂，多得平辈暗中之助。',
+    火星: '烈火之星——爆发力与急躁同源；点燃行动力，别烧到人情。',
+    铃星: '闷火之星——持久的韧劲与暗涌的脾气；宜文火慢炖，忌闷烧。',
+    地空: '空灵之星——破执之思、哲想与顿悟；务实事上宜多一道确认。',
+    地劫: '波动之星——耗散与起伏的提醒；轻财慎诺，反得洒脱。',
+    红鸾: '喜庆之星——情缘、喜事、人缘的粉光所在。',
+    天喜: '喜庆之星——喜讯、添喜、热闹的暖光所在。'
   }
   // 十二宫一句白话
   var PALACE_NOTE = {
@@ -157,20 +173,43 @@
       ming: ming, shen: shen, mingZhi: ZHI[ming], shenZhi: ZHI[shen],
       ju: ju, juEl: juEl, juName: juEl + (['', '', '二', '三', '四', '五', '六'][ju]) + '局',
       mingZhu: MING_ZHU[ming], shenZhu: SHEN_ZHU[yz],
-      yearGan: yGan, yearZhi: ZHI[yz],
+      yearGan: yGan, yearZhi: ZHI[yz], yearGanIdx: yg,
       sihua: sh.slice(), // [禄,权,科,忌] 星名
       palaces: palaces, starsByZhi: stars,
       params: { month: m, leap: month < 0, day: day, timeZhi: ZHI[t], timeZhiIdx: t }
     }
   }
 
-  // 由公历生辰排盘（依赖全局 Solar；gender 不影响安星，仅存档）
+  // 由公历生辰排盘（gender 供大限顺逆：阳男阴女顺、阴男阳女逆）
   function buildFromBirth(birth) {
     var solar = Solar.fromYmdHms(birth.year, birth.month, birth.day, birth.hour, birth.minute || 0, 0)
     var lu = solar.getLunar()
     var zw = buildFromLunar(lu.getYearGanIndex(), lu.getYearZhiIndex(), lu.getMonth(), lu.getDay(), lu.getTimeZhiIndex())
     zw.lunarDesc = lu.toString() + ' ' + lu.getTimeZhi() + '时'
+    zw.gender = birth.gender === 0 ? 0 : 1
+    zw.birthLunarYear = lu.getYear()
     return zw
+  }
+
+  /*
+   * 大限（紫微的十年大运）：起限 = 五行局数（虚岁），每限十年，第一限在命宫；
+   * 阳男阴女顺行（命→父母方向），阴男阳女逆行（命→兄弟方向）。
+   * 大限四化取大限宫之宫干（三合派通行）。selLunarYear = 所观日期的农历年。
+   */
+  function daXian(zw, selLunarYear) {
+    if (zw.birthLunarYear === undefined || zw.gender === undefined) return null
+    var age = selLunarYear - zw.birthLunarYear + 1 // 虚岁
+    if (age < zw.ju) return { tong: true, age: age, startAge: zw.ju } // 童限（未起限）
+    var idx = Math.floor((age - zw.ju) / 10)
+    var yangYear = zw.yearGanIdx % 2 === 0
+    var shun = (yangYear && zw.gender === 1) || (!yangYear && zw.gender === 0)
+    var gong = mod12(zw.ming + (shun ? idx : -idx))
+    var gan = palaceGan(zw.yearGanIdx, gong)
+    return {
+      tong: false, gong: gong, gongZhi: ZHI[gong], gan: gan,
+      startAge: zw.ju + idx * 10, endAge: zw.ju + idx * 10 + 9, age: age, shun: shun,
+      sihua: flowSiHua(zw, gan)
+    }
   }
 
   // 某星在盘中的地支序（找不到返回 -1）
@@ -237,8 +276,11 @@
         palace: pmap[gong] || '', sihua: flowSiHua(zw, gan)
       }
     }
+    var dx = daXian(zw, lu.getYear())
+    if (dx && !dx.tong) { dx.palace = pmap[dx.gong] || ''; dx.label = '大限' }
     return {
       lunarDesc: lu.toString(), lunarMonth: lm, lunarDay: ld, douJun: douJun,
+      dx: dx,
       nian: layer('流年', GAN[yg], ZHI[yz], yearGong),
       yue: layer('流月', mGan, ZHI[(2 + lm - 1) % 12], monthGong),
       ri: layer('流日', dayGz[0], dayGz[1], dayGong)
@@ -299,11 +341,24 @@
     })
     var chen = '臣观星垣：气聚' + ri.palace + '，禄在' + (luGong || '外') + '、忌在' + (jiGong || '外') +
       (jiInSFSZ ? '——忌临要垣，锋芒收三分，稳字当头。' : '——大道无碍，各安其位，顺星而行。')
-    return { fl: fl, gong: ri.palace, gongZhi: ri.gongZhi, stars: gs, theme: theme, starLines: starLines, huaLines: huaLines, chen: chen }
+    // 运限视角：大限（十年气象）× 流年（今年功课）× 流日（当日课业）
+    var yunxian = ''
+    function gsName(gong) {
+      var g = gongStars(zw, gong)
+      return g.stars.length ? g.stars.slice(0, 2).map(function (s) { return s.name }).join('') + (g.borrowed ? '(借)' : '') : '静'
+    }
+    if (fl.dx && !fl.dx.tong) {
+      yunxian = '大限（' + fl.dx.startAge + '–' + fl.dx.endAge + '岁）行「' + fl.dx.palace + '」坐' + gsName(fl.dx.gong) +
+        '——十年气象所聚；流年过「' + fl.nian.palace + '」坐' + gsName(fl.nian.gong) +
+        '——今年功课所在；日课落「' + ri.palace + '」——小事之中见大势。'
+    } else if (fl.dx && fl.dx.tong) {
+      yunxian = '尚在童限（' + fl.dx.startAge + '岁起第一限）；流年过「' + fl.nian.palace + '」坐' + gsName(fl.nian.gong) + '——今年功课所在。'
+    }
+    return { fl: fl, gong: ri.palace, gongZhi: ri.gongZhi, stars: gs, theme: theme, starLines: starLines, huaLines: huaLines, chen: chen, yunxian: yunxian }
   }
 
   var Ziwei = {
-    buildFromBirth: buildFromBirth, buildFromLunar: buildFromLunar,
+    buildFromBirth: buildFromBirth, buildFromLunar: buildFromLunar, daXian: daXian,
     flowSiHua: flowSiHua, flowLayers: flowLayers, dayAdvice: dayAdvice, gongStars: gongStars,
     sanFangSiZheng: sanFangSiZheng, starZhi: starZhi,
     ziweiPos: ziweiPos, naYinElement: naYinElement, palaceGan: palaceGan,
